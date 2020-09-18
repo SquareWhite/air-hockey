@@ -1,15 +1,59 @@
 import { Point } from '../helpers/math';
 
-export const FIELD_WIDTH = 500;
-export const FIELD_HEIGHT = 800;
+export const FIELD_WIDTH = 400;
+export const FIELD_HEIGHT = 700;
+export const FIELD_MARGIN = 100;
 export const FIELD_EDGE_RADIUS = 50;
 
 export const initialState = {
     gameField: {
-        middleLine: {
-            type: 'line',
-            points: [0, FIELD_HEIGHT / 2, FIELD_WIDTH, FIELD_HEIGHT / 2]
-        }
+        lines: [
+            {
+                // middle line
+                points: [
+                    FIELD_MARGIN,
+                    FIELD_HEIGHT / 2 + FIELD_MARGIN,
+                    FIELD_WIDTH + FIELD_MARGIN,
+                    FIELD_HEIGHT / 2 + FIELD_MARGIN
+                ]
+            },
+            {
+                // top line
+                points: [
+                    FIELD_MARGIN,
+                    FIELD_MARGIN,
+                    FIELD_WIDTH + FIELD_MARGIN,
+                    FIELD_MARGIN
+                ]
+            },
+            {
+                // left line
+                points: [
+                    FIELD_MARGIN,
+                    FIELD_MARGIN,
+                    FIELD_MARGIN,
+                    FIELD_HEIGHT + FIELD_MARGIN
+                ]
+            },
+            {
+                // right line
+                points: [
+                    FIELD_WIDTH + FIELD_MARGIN,
+                    FIELD_MARGIN,
+                    FIELD_WIDTH + FIELD_MARGIN,
+                    FIELD_HEIGHT + FIELD_MARGIN
+                ]
+            },
+            {
+                // bottom line
+                points: [
+                    FIELD_MARGIN,
+                    FIELD_HEIGHT + FIELD_MARGIN,
+                    FIELD_WIDTH + FIELD_MARGIN,
+                    FIELD_HEIGHT + FIELD_MARGIN
+                ]
+            }
+        ]
     },
     circle: {
         x: FIELD_WIDTH / 2,

@@ -6,44 +6,58 @@ import {
     projectPointToLine,
     movePointInDirection,
     getDirection,
-    Point,
     adjustPointsDistance,
-    Direction
+    Point,
+    Line,
+    Circle
 } from '../../helpers/math';
 
-type Collision = 'CIRCLE' | 'LINE' | 'LINE_CROSS' | 'CIRCLE_CROSS';
+type LineCollision = { type: 'LINE' | 'LINE_CROSS'; object: Line };
+type CircleCollision = {
+    type: 'CIRCLE' | 'CIRCLE_CROSS';
+    object: Circle;
+};
+type Collision = LineCollision | CircleCollision;
 
 let lastCollision: Collision | undefined;
 
 export const hasCollision = (state: StateTree): boolean => {
-    if (hasCircleCollision(state)) {
-        lastCollision = 'CIRCLE';
+    let line = findLineCollision(state);
+    if (line) {
+        lastCollision = {
+            type: 'LINE',
+            object: line
+        };
         return true;
     }
-    if (hasLineCollision(state)) {
-        lastCollision = 'LINE';
+
+    line = findLineCrossCollision(state);
+    if (line) {
+        lastCollision = {
+            type: 'LINE_CROSS',
+            object: line
+        };
         return true;
     }
-    if (circleWasCrossed(state)) {
-        lastCollision = 'CIRCLE_CROSS';
-        return true;
-    }
-    if (lineWasCrossed(state)) {
-        lastCollision = 'LINE_CROSS';
-        return true;
-    }
-    return false;
+
+    return hasCircleCollision(state) || circleWasCrossed(state);
 };
 
 export const resolveCollision = (state: StateTree): void => {
     if (!lastCollision || !state) {
         return;
     }
-    if (lastCollision === 'CIRCLE' || lastCollision === 'CIRCLE_CROSS') {
+
+    const { circle } = state;
+
+    if (
+        lastCollision.type === 'CIRCLE' ||
+        lastCollision.type === 'CIRCLE_CROSS'
+    ) {
         resolveCircleCollision(state);
     }
-    if (lastCollision === 'LINE' || lastCollision === 'LINE_CROSS') {
-        resolveLineCollision(state);
+    if (lastCollision.type === 'LINE' || lastCollision.type === 'LINE_CROSS') {
+        resolveLineCollision(circle, lastCollision.object);
     }
 };
 
@@ -59,35 +73,55 @@ const hasCircleCollision = (state: StateTree): boolean => {
     return distance < minDistance;
 };
 
-const hasLineCollision = (state: StateTree): boolean => {
+const findLineCollision = (state: StateTree): Line | null => {
     if (!state) {
-        return false;
+        return null;
     }
-
     const { circle, gameField } = state;
-    const [lineX1, lineY1, lineX2, lineY2] = gameField.middleLine.points;
-    const minDistance = circle.radius;
-    const distance = calculateDistanceToLine(circle, {
-        point1: { x: lineX1, y: lineY1 },
-        point2: { x: lineX2, y: lineY2 }
-    });
 
+    let collidingLine = null;
+    gameField.lines.forEach((lineInfo) => {
+        const [lineX1, lineY1, lineX2, lineY2] = lineInfo.points;
+        const line = {
+            point1: { x: lineX1, y: lineY1 },
+            point2: { x: lineX2, y: lineY2 }
+        };
+        if (collidesWithLine(circle, line)) {
+            collidingLine = line;
+        }
+    });
+    return collidingLine;
+};
+
+const collidesWithLine = (circle: GameCircle, line: Line): boolean => {
+    const minDistance = circle.radius;
+    const distance = calculateDistanceToLine(circle, line);
     return distance < minDistance;
 };
 
-const lineWasCrossed = (state: StateTree): boolean => {
+const findLineCrossCollision = (state: StateTree): Line | null => {
     if (!state) {
-        return false;
+        return null;
     }
 
-    const { circle, otherCircle, gameField } = state;
-    const prevPosition: Point = { x: circle.prevX, y: circle.prevY };
-    const [lineX1, lineY1, lineX2, lineY2] = gameField.middleLine.points;
-    const line = {
-        point1: { x: lineX1, y: lineY1 },
-        point2: { x: lineX2, y: lineY2 }
-    };
+    const { circle, gameField } = state;
 
+    let collidingLine = null;
+    gameField.lines.forEach((lineInfo) => {
+        const [lineX1, lineY1, lineX2, lineY2] = lineInfo.points;
+        const line = {
+            point1: { x: lineX1, y: lineY1 },
+            point2: { x: lineX2, y: lineY2 }
+        };
+        if (crossedTheLine(circle, line)) {
+            collidingLine = line;
+        }
+    });
+    return collidingLine;
+};
+
+const crossedTheLine = (circle: GameCircle, line: Line): boolean => {
+    const prevPosition: Point = { x: circle.prevX, y: circle.prevY };
     const prevVertical = projectPointToLine(prevPosition, line);
     const newVertical = projectPointToLine(circle, line);
 
@@ -169,17 +203,7 @@ const resolveCircleCollision = (state: StateTree): void => {
     circleMoveAbsolute(newPosition.x, newPosition.y, false);
 };
 
-const resolveLineCollision = (state: StateTree): void => {
-    if (!state) {
-        return;
-    }
-    const { circle, gameField } = state;
-    const [lineX1, lineY1, lineX2, lineY2] = gameField.middleLine.points;
-    const line = {
-        point1: { x: lineX1, y: lineY1 },
-        point2: { x: lineX2, y: lineY2 }
-    };
-
+const resolveLineCollision = (circle: GameCircle, line: Line): void => {
     const againstMovement = getDirection(circle, {
         x: circle.prevX,
         y: circle.prevY

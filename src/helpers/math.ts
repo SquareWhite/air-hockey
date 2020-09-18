@@ -3,6 +3,15 @@ export interface Point {
     y: number;
 }
 
+export interface Line {
+    point1: Point;
+    point2: Point;
+}
+
+export interface Circle extends Point {
+    radius: number;
+}
+
 export interface Direction {
     deltaX: number;
     deltaY: number;
@@ -19,18 +28,12 @@ export const calculateDistance = (point1: Point, point2: Point): number => {
     return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
 };
 
-export const calculateDistanceToLine = (
-    point: Point,
-    line: { point1: Point; point2: Point }
-): number => {
+export const calculateDistanceToLine = (point: Point, line: Line): number => {
     const projectedPoint = projectPointToLine(point, line);
     return calculateDistance(point, projectedPoint);
 };
 
-export const projectPointToLine = (
-    point: Point,
-    line: { point1: Point; point2: Point }
-): Point => {
+export const projectPointToLine = (point: Point, line: Line): Point => {
     let interception: Point;
 
     const deltaXLine = line.point1.x - line.point2.x;
