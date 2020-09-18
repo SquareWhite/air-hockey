@@ -7,21 +7,13 @@ import {
     movePointInDirection,
     getDirection,
     Point,
+    adjustPointsDistance,
     Direction
 } from '../../helpers/math';
 
-type Collision = 'CIRCLE' | 'LINE';
+type Collision = 'CIRCLE' | 'LINE' | 'LINE_CROSS' | 'CIRCLE_CROSS';
 
-interface CollisionCheckResult {
-    hasCollision: boolean;
-    shouldGlide: boolean;
-}
-
-const EPSILON = 0.1;
 let lastCollision: Collision | undefined;
-
-// todo add gliding collisions
-// todo add jump-through collisions
 
 export const hasCollision = (state: StateTree): boolean => {
     if (hasCircleCollision(state)) {
@@ -32,6 +24,14 @@ export const hasCollision = (state: StateTree): boolean => {
         lastCollision = 'LINE';
         return true;
     }
+    if (circleWasCrossed(state)) {
+        lastCollision = 'CIRCLE_CROSS';
+        return true;
+    }
+    if (lineWasCrossed(state)) {
+        lastCollision = 'LINE_CROSS';
+        return true;
+    }
     return false;
 };
 
@@ -39,10 +39,10 @@ export const resolveCollision = (state: StateTree): void => {
     if (!lastCollision || !state) {
         return;
     }
-    if (lastCollision === 'CIRCLE') {
+    if (lastCollision === 'CIRCLE' || lastCollision === 'CIRCLE_CROSS') {
         resolveCircleCollision(state);
     }
-    if (lastCollision === 'LINE') {
+    if (lastCollision === 'LINE' || lastCollision === 'LINE_CROSS') {
         resolveLineCollision(state);
     }
 };
@@ -73,6 +73,60 @@ const hasLineCollision = (state: StateTree): boolean => {
     });
 
     return distance < minDistance;
+};
+
+const lineWasCrossed = (state: StateTree): boolean => {
+    if (!state) {
+        return false;
+    }
+
+    const { circle, otherCircle, gameField } = state;
+    const prevPosition: Point = { x: circle.prevX, y: circle.prevY };
+    const [lineX1, lineY1, lineX2, lineY2] = gameField.middleLine.points;
+    const line = {
+        point1: { x: lineX1, y: lineY1 },
+        point2: { x: lineX2, y: lineY2 }
+    };
+
+    const prevVertical = projectPointToLine(prevPosition, line);
+    const newVertical = projectPointToLine(circle, line);
+
+    const prevDirection = getDirection(prevPosition, prevVertical);
+    const newDirection = getDirection(circle, newVertical);
+
+    return (
+        newDirection.xDirection !== prevDirection.xDirection ||
+        newDirection.yDirection !== prevDirection.yDirection
+    );
+};
+
+const circleWasCrossed = (state: StateTree): boolean => {
+    if (!state) {
+        return false;
+    }
+
+    const { circle, otherCircle } = state;
+    const prevPosition: Point = { x: circle.prevX, y: circle.prevY };
+
+    const intersection = projectPointToLine(otherCircle, {
+        point1: prevPosition,
+        point2: circle
+    });
+
+    const intersectionIsOutside =
+        calculateDistance(otherCircle, intersection) > otherCircle.radius;
+
+    if (intersectionIsOutside) {
+        return false;
+    }
+
+    const prevDirection = getDirection(prevPosition, intersection);
+    const newDirection = getDirection(circle, intersection);
+
+    return (
+        newDirection.xDirection !== prevDirection.xDirection ||
+        newDirection.yDirection !== prevDirection.yDirection
+    );
 };
 
 const resolveCircleCollision = (state: StateTree): void => {
@@ -160,85 +214,4 @@ const resolveLineCollision = (state: StateTree): void => {
     );
 
     circleMoveAbsolute(newCoords.x, newCoords.y, false);
-};
-
-const adjustPointsDistance = ({
-    circle,
-    direction,
-    targetDistance,
-    distanceFn
-}: {
-    circle: Point;
-    direction: Direction;
-    targetDistance: number;
-    distanceFn: (point: Point) => number;
-}): Point | null => {
-    let { x: newX, y: newY } = circle;
-    let { deltaX, deltaY } = direction;
-    const {
-        xDirection: xInitialDirection,
-        yDirection: yInitialDirection
-    } = direction;
-    const xOppositeDirection = -xInitialDirection;
-    const yOppositeDirection = -yInitialDirection;
-    let xDirection = xInitialDirection;
-    let yDirection = yInitialDirection;
-
-    deltaX = Math.abs(deltaX);
-    deltaY = Math.abs(deltaY);
-
-    let distance = distanceFn(circle);
-
-    // scaling up the deltas to make sure
-    // that we're approaching the desired
-    // point from the collision-free zone
-    const scalingFactor = targetDistance * 7;
-    [deltaX, deltaY] = [
-        (deltaX / Math.max(deltaX, deltaY)) * scalingFactor,
-        (deltaY / Math.max(deltaX, deltaY)) * scalingFactor
-    ];
-
-    while (Math.abs(targetDistance - distance) >= EPSILON) {
-        deltaX /= 2;
-        deltaY /= 2;
-        newX += xDirection * deltaX;
-        newY += yDirection * deltaY;
-
-        distance = distanceFn({ x: newX, y: newY });
-
-        if (distance > targetDistance) {
-            xDirection = xOppositeDirection;
-            yDirection = yOppositeDirection;
-        } else {
-            xDirection = xInitialDirection;
-            yDirection = yInitialDirection;
-        }
-    }
-
-    if (distance < targetDistance) {
-        const shiftedPoint = movePointInDirection(
-            { x: newX, y: newY },
-            {
-                deltaX,
-                deltaY,
-                xDirection: xInitialDirection,
-                yDirection: yInitialDirection
-            },
-            EPSILON
-        );
-        const lastDistance = distanceFn(shiftedPoint);
-        newX = shiftedPoint.x;
-        newY = shiftedPoint.y;
-    }
-
-    if (
-        !Number.isNaN(newX) &&
-        !Number.isNaN(newY) &&
-        (Math.abs(circle.x - newX) > EPSILON ||
-            Math.abs(circle.y - newY) > EPSILON)
-    ) {
-        return { x: newX, y: newY };
-    }
-
-    return null;
 };

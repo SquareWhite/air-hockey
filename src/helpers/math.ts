@@ -10,6 +10,8 @@ export interface Direction {
     yDirection: number;
 }
 
+const EPSILON = 0.1;
+
 export const calculateDistance = (point1: Point, point2: Point): number => {
     const { x: x1, y: y1 } = point1;
     const { x: x2, y: y2 } = point2;
@@ -101,4 +103,76 @@ export const getDirection = (from: Point, to: Point): Direction => {
         xDirection,
         yDirection
     };
+};
+
+export const adjustPointsDistance = ({
+    circle,
+    direction,
+    targetDistance,
+    distanceFn
+}: {
+    circle: Point;
+    direction: Direction;
+    targetDistance: number;
+    distanceFn: (point: Point) => number;
+}): Point | null => {
+    let { x: newX, y: newY } = circle;
+    let { deltaX, deltaY } = direction;
+    const {
+        xDirection: xInitialDirection,
+        yDirection: yInitialDirection
+    } = direction;
+    const xOppositeDirection = -xInitialDirection;
+    const yOppositeDirection = -yInitialDirection;
+    let xDirection = xInitialDirection;
+    let yDirection = yInitialDirection;
+
+    deltaX = Math.abs(deltaX);
+    deltaY = Math.abs(deltaY);
+
+    let distance = distanceFn(circle);
+
+    while (Math.abs(targetDistance - distance) >= EPSILON) {
+        deltaX /= 2;
+        deltaY /= 2;
+        newX += xDirection * deltaX;
+        newY += yDirection * deltaY;
+
+        distance = distanceFn({ x: newX, y: newY });
+
+        if (distance > targetDistance) {
+            xDirection = xOppositeDirection;
+            yDirection = yOppositeDirection;
+        } else {
+            xDirection = xInitialDirection;
+            yDirection = yInitialDirection;
+        }
+    }
+
+    if (distance < targetDistance) {
+        const shiftedPoint = movePointInDirection(
+            { x: newX, y: newY },
+            {
+                deltaX,
+                deltaY,
+                xDirection: xInitialDirection,
+                yDirection: yInitialDirection
+            },
+            EPSILON
+        );
+        const lastDistance = distanceFn(shiftedPoint);
+        newX = shiftedPoint.x;
+        newY = shiftedPoint.y;
+    }
+
+    if (
+        !Number.isNaN(newX) &&
+        !Number.isNaN(newY) &&
+        (Math.abs(circle.x - newX) > EPSILON ||
+            Math.abs(circle.y - newY) > EPSILON)
+    ) {
+        return { x: newX, y: newY };
+    }
+
+    return null;
 };
