@@ -19,7 +19,7 @@ export interface Direction {
     yDirection: number;
 }
 
-const EPSILON = 0.1;
+export const EPSILON = 0.1;
 
 export const calculateDistance = (point1: Point, point2: Point): number => {
     const { x: x1, y: y1 } = point1;
@@ -135,7 +135,9 @@ export const adjustPointsDistance = ({
 
     let distance = distanceFn(circle);
 
+    console.log(circle, direction);
     while (Math.abs(targetDistance - distance) >= EPSILON) {
+        console.log(distance, targetDistance);
         deltaX /= 2;
         deltaY /= 2;
         newX += xDirection * deltaX;
@@ -152,7 +154,7 @@ export const adjustPointsDistance = ({
         }
     }
 
-    if (distance < targetDistance) {
+    while (distance < targetDistance) {
         const shiftedPoint = movePointInDirection(
             { x: newX, y: newY },
             {
@@ -161,9 +163,9 @@ export const adjustPointsDistance = ({
                 xDirection: xInitialDirection,
                 yDirection: yInitialDirection
             },
-            EPSILON
+            EPSILON * 2
         );
-        const lastDistance = distanceFn(shiftedPoint);
+        distance = distanceFn(shiftedPoint);
         newX = shiftedPoint.x;
         newY = shiftedPoint.y;
     }

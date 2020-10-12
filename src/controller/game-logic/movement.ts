@@ -24,7 +24,8 @@ export const createMoveFunction = ({ baseVelocity = 1, maxVelocity = 100 }) => {
         if (shouldStartMoving && !stopMovingFn) {
             const accelaration = gameClock$.subscribe(() => {
                 if (currentDistance <= 0) {
-                    currentVelocity = 0;
+                    stopMovingFn && stopMovingFn();
+                    stopMovingFn = null;
                     return;
                 }
 

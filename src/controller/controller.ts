@@ -1,6 +1,6 @@
 import './entities/circle';
 
-import { collisions$ } from './game-observables';
-import { resolveCollision } from './game-logic/collisions';
+import { collisions$, gameClock$ } from './game-observables';
+import { resolveCollisions } from './game-logic/collisions';
 
-collisions$.subscribe(resolveCollision);
+collisions$.subscribe(resolveCollisions);

@@ -8,7 +8,6 @@
 
 ### Game features:
 
--   Add walls / wall collision for circle
 -   Add rounded corners / rounded corner collision for circle
 -   Add a puck & make it possible to push it with circle
 -   Puck should collide with outer walls and rounded corners. Not with the middle line

@@ -1,5 +1,3 @@
-import { Point } from '../helpers/math';
-
 export const FIELD_WIDTH = 400;
 export const FIELD_HEIGHT = 700;
 export const FIELD_MARGIN = 100;
@@ -56,18 +54,38 @@ export const initialState = {
         ]
     },
     circle: {
-        x: FIELD_WIDTH / 2,
+        x: FIELD_WIDTH / 2 + 100,
         y: FIELD_HEIGHT * (3 / 4),
-        prevX: FIELD_WIDTH / 2,
-        prevY: FIELD_HEIGHT * (3 / 4),
+        previousPositions: [
+            // newer position
+            {
+                x: FIELD_WIDTH / 2 + 200,
+                y: FIELD_HEIGHT * (3 / 4)
+            },
+            // older position
+            {
+                x: FIELD_WIDTH / 2 + 200,
+                y: FIELD_HEIGHT * (3 / 4)
+            }
+        ],
         radius: 30,
         id: 'circle-1'
     },
     otherCircle: {
         x: FIELD_WIDTH / 2,
-        y: FIELD_HEIGHT * (1 / 4),
-        prevX: FIELD_WIDTH / 2,
-        prevY: FIELD_HEIGHT * (1 / 4),
+        y: FIELD_HEIGHT * (3 / 4),
+        previousPositions: [
+            // newer position
+            {
+                x: FIELD_WIDTH / 2,
+                y: FIELD_HEIGHT * (3 / 4)
+            },
+            // older position
+            {
+                x: FIELD_WIDTH / 2,
+                y: FIELD_HEIGHT * (3 / 4)
+            }
+        ],
         radius: 30,
         id: 'circle-2'
     }
@@ -75,3 +93,4 @@ export const initialState = {
 
 export type StateTree = typeof initialState | undefined;
 export type GameCircle = typeof initialState.circle;
+export type GameField = typeof initialState.gameField;

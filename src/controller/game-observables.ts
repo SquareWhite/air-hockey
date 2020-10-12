@@ -13,13 +13,14 @@ import {
     share,
     filter,
     throttleTime,
-    map
+    map,
+    scan
 } from 'rxjs/operators';
 
 import { store } from '../model/store';
 import { StateTree } from '../model/initial-state';
 import { KeyCode } from '../constants/keycodes';
-import { hasCollision } from './game-logic/collisions';
+import { findCollisionsInState, Collision } from './game-logic/collisions';
 
 export const gameClock$ = interval(15).pipe(share());
 
@@ -50,4 +51,17 @@ export const store$ = from<any>(store).pipe(
     map((value) => value as StateTree)
 );
 
-export const collisions$ = store$.pipe(filter(hasCollision));
+export const collisions$ = store$.pipe(
+    map(findCollisionsInState),
+    scan((acc, collisions) => {
+        // todo probably don't need it
+        if (!collisions.length) {
+            return [];
+        }
+        if (!acc.length) {
+            return collisions;
+        }
+        return acc.concat(collisions);
+    }),
+    filter((value): value is Collision[] => !!(value && value.length))
+);

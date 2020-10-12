@@ -1,4 +1,4 @@
-import { StateTree, GameCircle } from '../../model/initial-state';
+import { StateTree, GameCircle, GameField } from '../../model/initial-state';
 import { circleMoveAbsolute } from '../../model/action-creators/circle';
 import {
     calculateDistance,
@@ -9,88 +9,133 @@ import {
     adjustPointsDistance,
     Point,
     Line,
-    Circle
+    Circle,
+    EPSILON
 } from '../../helpers/math';
 
-type LineCollision = { type: 'LINE' | 'LINE_CROSS'; object: Line };
-type CircleCollision = {
+export type LineCollision = {
+    type: 'LINE' | 'LINE_CROSS';
+    circle: GameCircle;
+    object2: Line;
+};
+export type CircleCollision = {
     type: 'CIRCLE' | 'CIRCLE_CROSS';
-    object: Circle;
+    circle: GameCircle;
+    object2: Circle;
 };
-type Collision = LineCollision | CircleCollision;
+export type Collision = LineCollision | CircleCollision;
 
-let lastCollision: Collision | undefined;
-
-export const hasCollision = (state: StateTree): boolean => {
-    let line = findLineCollision(state);
-    if (line) {
-        lastCollision = {
-            type: 'LINE',
-            object: line
-        };
-        return true;
-    }
-
-    line = findLineCrossCollision(state);
-    if (line) {
-        lastCollision = {
-            type: 'LINE_CROSS',
-            object: line
-        };
-        return true;
-    }
-
-    return hasCircleCollision(state) || circleWasCrossed(state);
-};
-
-export const resolveCollision = (state: StateTree): void => {
-    if (!lastCollision || !state) {
-        return;
-    }
-
-    const { circle } = state;
-
-    if (
-        lastCollision.type === 'CIRCLE' ||
-        lastCollision.type === 'CIRCLE_CROSS'
-    ) {
-        resolveCircleCollision(state);
-    }
-    if (lastCollision.type === 'LINE' || lastCollision.type === 'LINE_CROSS') {
-        resolveLineCollision(circle, lastCollision.object);
-    }
-};
-
-const hasCircleCollision = (state: StateTree): boolean => {
+export const findCollisionsInState = (state: StateTree): Collision[] => {
     if (!state) {
-        return false;
+        return [];
     }
 
-    const { circle, otherCircle } = state;
-    const minDistance = circle.radius + otherCircle.radius;
-    const distance = calculateDistance(circle, otherCircle);
+    console.log('findCollisionsInState');
 
-    return distance < minDistance;
-};
-
-const findLineCollision = (state: StateTree): Line | null => {
-    if (!state) {
-        return null;
-    }
-    const { circle, gameField } = state;
-
-    let collidingLine = null;
-    gameField.lines.forEach((lineInfo) => {
+    const { circle, otherCircle, gameField } = state;
+    const lines: Line[] = gameField.lines.map((lineInfo) => {
         const [lineX1, lineY1, lineX2, lineY2] = lineInfo.points;
         const line = {
             point1: { x: lineX1, y: lineY1 },
             point2: { x: lineX2, y: lineY2 }
         };
-        if (collidesWithLine(circle, line)) {
-            collidingLine = line;
+        return line;
+    });
+
+    return findCollisions(circle, [otherCircle, ...lines]);
+};
+
+const findCollisions = (
+    circle: GameCircle,
+    objects: (Line | Circle)[]
+): Collision[] => {
+    let otherCircle: Circle | null = null;
+    const lines: Line[] = [];
+    objects.forEach((obj) => {
+        if ('radius' in obj) {
+            otherCircle = obj;
+        } else {
+            lines.push(obj);
         }
     });
-    return collidingLine;
+
+    const result: Collision[][] = [
+        otherCircle ? findCircleCollisions(circle, otherCircle) : [],
+        otherCircle ? findCircleCrossCollisions(circle, otherCircle) : [],
+        findLineCollisions(circle, lines),
+        findLineCrossCollisions(circle, lines)
+    ];
+
+    return result.flat().filter((val): val is Collision => !!val);
+};
+
+export const resolveCollisions = (collisions: Collision[]): void => {
+    if (!collisions || !collisions.length) {
+        return;
+    }
+
+    let newPosition: Point | null = null;
+    if (collisions.length > 1) {
+        const objects = collisions.map((coll) => coll.object2);
+        newPosition = resolveMultiObjectCollision(
+            collisions[0].circle,
+            objects
+        );
+    } else {
+        const collision = collisions[collisions.length - 1];
+        console.log(collision.type);
+        if (collision.type === 'CIRCLE' || collision.type === 'CIRCLE_CROSS') {
+            newPosition = resolveCircleCollision(
+                collision.circle,
+                collision.object2,
+                true
+            );
+        }
+        if (collision.type === 'LINE' || collision.type === 'LINE_CROSS') {
+            newPosition = resolveLineCollision(
+                collision.circle,
+                collision.object2,
+                true
+            );
+        }
+    }
+    // todo -- set default in declaration, not inside the functions
+    newPosition && circleMoveAbsolute(newPosition.x, newPosition.y, false);
+};
+
+const findCircleCollisions = (
+    circle: GameCircle,
+    otherCircle: Circle
+): Collision[] => {
+    const minDistance = circle.radius + otherCircle.radius;
+    const distance = calculateDistance(circle, otherCircle);
+
+    return distance < minDistance
+        ? [
+              {
+                  type: 'CIRCLE',
+                  circle,
+                  object2: otherCircle
+              }
+          ]
+        : [];
+};
+
+const findLineCollisions = (circle: GameCircle, lines: Line[]): Collision[] => {
+    const collidingLines: Line[] = [];
+    lines.forEach((line) => {
+        if (collidesWithLine(circle, line)) {
+            collidingLines.push(line);
+        }
+    });
+
+    return collidingLines.length
+        ? collidingLines.map((line) => ({
+              type: 'LINE',
+              circle,
+              object2: line
+          }))
+        : [];
 };
 
 const collidesWithLine = (circle: GameCircle, line: Line): boolean => {
@@ -99,29 +144,27 @@ const collidesWithLine = (circle: GameCircle, line: Line): boolean => {
     return distance < minDistance;
 };
 
-const findLineCrossCollision = (state: StateTree): Line | null => {
-    if (!state) {
-        return null;
-    }
-
-    const { circle, gameField } = state;
-
-    let collidingLine = null;
-    gameField.lines.forEach((lineInfo) => {
-        const [lineX1, lineY1, lineX2, lineY2] = lineInfo.points;
-        const line = {
-            point1: { x: lineX1, y: lineY1 },
-            point2: { x: lineX2, y: lineY2 }
-        };
+const findLineCrossCollisions = (
+    circle: GameCircle,
+    lines: Line[]
+): Collision[] => {
+    const collidingLines: Line[] = [];
+    lines.forEach((line) => {
         if (crossedTheLine(circle, line)) {
-            collidingLine = line;
+            collidingLines.push(line);
         }
     });
-    return collidingLine;
+    return collidingLines.length
+        ? collidingLines.map((line) => ({
+              type: 'LINE_CROSS',
+              circle,
+              object2: line
+          }))
+        : [];
 };
 
 const crossedTheLine = (circle: GameCircle, line: Line): boolean => {
-    const prevPosition: Point = { x: circle.prevX, y: circle.prevY };
+    const prevPosition: Point = circle.previousPositions[0];
     const prevVertical = projectPointToLine(prevPosition, line);
     const newVertical = projectPointToLine(circle, line);
 
@@ -134,13 +177,11 @@ const crossedTheLine = (circle: GameCircle, line: Line): boolean => {
     );
 };
 
-const circleWasCrossed = (state: StateTree): boolean => {
-    if (!state) {
-        return false;
-    }
-
-    const { circle, otherCircle } = state;
-    const prevPosition: Point = { x: circle.prevX, y: circle.prevY };
+const findCircleCrossCollisions = (
+    circle: GameCircle,
+    otherCircle: Circle
+): Collision[] => {
+    const prevPosition: Point = circle.previousPositions[0];
 
     const intersection = projectPointToLine(otherCircle, {
         point1: prevPosition,
@@ -151,91 +192,183 @@ const circleWasCrossed = (state: StateTree): boolean => {
         calculateDistance(otherCircle, intersection) > otherCircle.radius;
 
     if (intersectionIsOutside) {
-        return false;
+        return [];
     }
 
     const prevDirection = getDirection(prevPosition, intersection);
     const newDirection = getDirection(circle, intersection);
-
-    return (
+    const collisionOccured =
         newDirection.xDirection !== prevDirection.xDirection ||
-        newDirection.yDirection !== prevDirection.yDirection
-    );
+        newDirection.yDirection !== prevDirection.yDirection;
+
+    return collisionOccured
+        ? [
+              {
+                  type: 'CIRCLE_CROSS',
+                  circle,
+                  object2: otherCircle
+              }
+          ]
+        : [];
 };
 
-const resolveCircleCollision = (state: StateTree): void => {
-    if (!state) {
-        return;
-    }
-
-    const { circle, otherCircle } = state;
-    const againstMovement = getDirection(circle, {
-        x: circle.prevX,
-        y: circle.prevY
-    });
+const resolveCircleCollision = (
+    circle: GameCircle,
+    otherCircle: Circle,
+    shouldGlide: boolean
+): Point => {
+    console.log('resolveCircleCollision');
+    const againstMovement = getDirection(circle, circle.previousPositions[0]);
     const minDistance = circle.radius + otherCircle.radius;
     const distanceFn = (point: Point): number =>
         calculateDistance(point, otherCircle);
-    const pointOnTheSurface = adjustPointsDistance({
+    const lastPositionWithoutCollision: Point = findLastPositionWithoutCollision(
         circle,
-        direction: againstMovement,
-        targetDistance: minDistance,
-        distanceFn
-    }) || { x: circle.prevX, y: circle.prevY };
-
-    const verticalStep = calculateDistanceToLine(circle, {
-        point1: pointOnTheSurface,
-        point2: otherCircle
-    });
-    const positionInsideCircle = movePointInDirection(
-        pointOnTheSurface,
-        getDirection(pointOnTheSurface, circle),
-        verticalStep
+        [otherCircle]
     );
-    const newPosition =
+    let newCoords =
         adjustPointsDistance({
-            circle: positionInsideCircle,
-            direction: getDirection(otherCircle, positionInsideCircle),
+            circle,
+            direction: againstMovement,
             targetDistance: minDistance,
             distanceFn
-        }) || pointOnTheSurface;
+        }) || lastPositionWithoutCollision;
 
-    circleMoveAbsolute(newPosition.x, newPosition.y, false);
+    // CIRCLE GLIDE
+    if (shouldGlide) {
+        console.log('resolveCircleCollision calcDistanceToLine');
+        const verticalStep = calculateDistanceToLine(circle, {
+            point1: newCoords,
+            point2: otherCircle
+        });
+        console.log('resolveCircleCollision movePoint');
+        const positionInsideCircle = movePointInDirection(
+            newCoords,
+            getDirection(newCoords, circle),
+            verticalStep
+        );
+        console.log('resolveCircleCollision adjustDistance');
+        newCoords =
+            adjustPointsDistance({
+                circle: positionInsideCircle,
+                direction: getDirection(otherCircle, positionInsideCircle),
+                targetDistance: minDistance,
+                distanceFn
+            }) || lastPositionWithoutCollision;
+    }
+
+    return newCoords;
 };
 
-const resolveLineCollision = (circle: GameCircle, line: Line): void => {
-    const againstMovement = getDirection(circle, {
-        x: circle.prevX,
-        y: circle.prevY
-    });
+const resolveLineCollision = (
+    circle: GameCircle,
+    line: Line,
+    shouldGlide: boolean
+): Point => {
+    const againstMovement = getDirection(circle, circle.previousPositions[0]);
     const minDistance = circle.radius;
     const distanceFn = (point: Point): number =>
         calculateDistanceToLine(point, line);
-    const pointNearTheLine = adjustPointsDistance({
+    const lastPositionWithoutCollision: Point = findLastPositionWithoutCollision(
         circle,
-        direction: againstMovement,
-        targetDistance: minDistance,
-        distanceFn
-    }) || { x: circle.prevX, y: circle.prevY };
-
-    const projectedPoint1 = projectPointToLine(
-        { x: circle.prevX, y: circle.prevY },
-        line
+        [line]
     );
-    const projectedPoint2 = projectPointToLine(circle, line);
-    const distance = calculateDistance(projectedPoint1, projectedPoint2);
-    const deltaX = line.point1.x - line.point2.x;
-    const deltaY = line.point1.y - line.point2.y;
-    const newCoords = movePointInDirection(
-        pointNearTheLine,
-        {
-            deltaX,
-            deltaY,
-            xDirection: -againstMovement.xDirection,
-            yDirection: -againstMovement.yDirection
-        },
-        distance
-    );
+    let newCoords =
+        adjustPointsDistance({
+            circle,
+            direction: againstMovement,
+            targetDistance: minDistance,
+            distanceFn
+        }) || lastPositionWithoutCollision;
 
-    circleMoveAbsolute(newCoords.x, newCoords.y, false);
+    if (shouldGlide) {
+        const projectedPoint1 = projectPointToLine(
+            circle.previousPositions[0],
+            line
+        );
+        const projectedPoint2 = projectPointToLine(circle, line);
+        const distance = calculateDistance(projectedPoint1, projectedPoint2);
+        const deltaX = line.point1.x - line.point2.x;
+        const deltaY = line.point1.y - line.point2.y;
+        newCoords = movePointInDirection(
+            newCoords,
+            {
+                deltaX,
+                deltaY,
+                xDirection: -againstMovement.xDirection,
+                yDirection: -againstMovement.yDirection
+            },
+            distance
+        );
+    }
+
+    return newCoords;
 };
+
+const resolveMultiObjectCollision = (
+    circle: GameCircle,
+    objects: (Line | Circle)[]
+): Point => {
+    console.log('resolveMultiObjectCollision');
+    const prevPosition: Point = findLastPositionWithoutCollision(
+        circle,
+        objects
+    );
+    let shouldGlide = true;
+    let newPosition = { x: circle.x, y: circle.y };
+    for (const obj of objects) {
+        newPosition =
+            'radius' in obj
+                ? resolveCircleCollision(
+                      { ...circle, ...newPosition },
+                      obj,
+                      shouldGlide
+                  )
+                : resolveLineCollision(
+                      { ...circle, ...newPosition },
+                      obj,
+                      shouldGlide
+                  );
+        const foundCollisions = findCollisions(
+            {
+                ...circle,
+                ...newPosition
+            },
+            objects
+        );
+        if (foundCollisions.length === 0) {
+            return newPosition;
+        }
+
+        shouldGlide = false;
+    }
+    return prevPosition;
+};
+
+const findLastPositionWithoutCollision = (
+    circle: GameCircle,
+    objects: (Line | Circle)[]
+): Point => {
+    console.log('findLastPositionWithoutCollision');
+    for (const pos of circle.previousPositions) {
+        const foundCollisions = findCollisions(
+            {
+                ...circle,
+                x: pos.x,
+                y: pos.y
+            },
+            objects
+        );
+        if (foundCollisions.length === 0) {
+            return pos;
+        }
+    }
+    console.log('they all fucked(');
+    return circle.previousPositions[0];
+};
+
+// 2 - there's a bug with glide disabled, investigate it
+// 3 - don't glide twice: (
+//     circle collision resolution -> glide ->
+//     wall collision resolution -> circle collision resolution -> no glide!
+// )
