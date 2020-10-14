@@ -56,36 +56,20 @@ export const initialState = {
     circle: {
         x: FIELD_WIDTH / 2 + 100,
         y: FIELD_HEIGHT * (3 / 4),
-        previousPositions: [
-            // newer position
-            {
-                x: FIELD_WIDTH / 2 + 200,
-                y: FIELD_HEIGHT * (3 / 4)
-            },
-            // older position
-            {
-                x: FIELD_WIDTH / 2 + 200,
-                y: FIELD_HEIGHT * (3 / 4)
-            }
-        ],
+        previousPosition: {
+            x: FIELD_WIDTH / 2 + 100,
+            y: FIELD_HEIGHT * (3 / 4)
+        },
         radius: 30,
         id: 'circle-1'
     },
     otherCircle: {
         x: FIELD_WIDTH / 2,
         y: FIELD_HEIGHT * (3 / 4),
-        previousPositions: [
-            // newer position
-            {
-                x: FIELD_WIDTH / 2,
-                y: FIELD_HEIGHT * (3 / 4)
-            },
-            // older position
-            {
-                x: FIELD_WIDTH / 2,
-                y: FIELD_HEIGHT * (3 / 4)
-            }
-        ],
+        previousPosition: {
+            x: FIELD_WIDTH / 2,
+            y: FIELD_HEIGHT * (3 / 4)
+        },
         radius: 30,
         id: 'circle-2'
     }

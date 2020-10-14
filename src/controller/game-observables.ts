@@ -54,7 +54,6 @@ export const store$ = from<any>(store).pipe(
 export const collisions$ = store$.pipe(
     map(findCollisionsInState),
     scan((acc, collisions) => {
-        // todo probably don't need it
         if (!collisions.length) {
             return [];
         }

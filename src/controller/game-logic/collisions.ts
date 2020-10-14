@@ -30,8 +30,6 @@ export const findCollisionsInState = (state: StateTree): Collision[] => {
         return [];
     }
 
-    console.log('findCollisionsInState');
-
     const { circle, otherCircle, gameField } = state;
     const lines: Line[] = gameField.lines.map((lineInfo) => {
         const [lineX1, lineY1, lineX2, lineY2] = lineInfo.points;
@@ -83,7 +81,6 @@ export const resolveCollisions = (collisions: Collision[]): void => {
         );
     } else {
         const collision = collisions[collisions.length - 1];
-        console.log(collision.type);
         if (collision.type === 'CIRCLE' || collision.type === 'CIRCLE_CROSS') {
             newPosition = resolveCircleCollision(
                 collision.circle,
@@ -164,7 +161,7 @@ const findLineCrossCollisions = (
 };
 
 const crossedTheLine = (circle: GameCircle, line: Line): boolean => {
-    const prevPosition: Point = circle.previousPositions[0];
+    const prevPosition: Point = circle.previousPosition;
     const prevVertical = projectPointToLine(prevPosition, line);
     const newVertical = projectPointToLine(circle, line);
 
@@ -181,7 +178,7 @@ const findCircleCrossCollisions = (
     circle: GameCircle,
     otherCircle: Circle
 ): Collision[] => {
-    const prevPosition: Point = circle.previousPositions[0];
+    const prevPosition: Point = circle.previousPosition;
 
     const intersection = projectPointToLine(otherCircle, {
         point1: prevPosition,
@@ -217,15 +214,11 @@ const resolveCircleCollision = (
     otherCircle: Circle,
     shouldGlide: boolean
 ): Point => {
-    console.log('resolveCircleCollision');
-    const againstMovement = getDirection(circle, circle.previousPositions[0]);
+    const againstMovement = getDirection(circle, circle.previousPosition);
     const minDistance = circle.radius + otherCircle.radius;
     const distanceFn = (point: Point): number =>
         calculateDistance(point, otherCircle);
-    const lastPositionWithoutCollision: Point = findLastPositionWithoutCollision(
-        circle,
-        [otherCircle]
-    );
+    const lastPositionWithoutCollision = circle.previousPosition;
     let newCoords =
         adjustPointsDistance({
             circle,
@@ -236,18 +229,15 @@ const resolveCircleCollision = (
 
     // CIRCLE GLIDE
     if (shouldGlide) {
-        console.log('resolveCircleCollision calcDistanceToLine');
         const verticalStep = calculateDistanceToLine(circle, {
             point1: newCoords,
             point2: otherCircle
         });
-        console.log('resolveCircleCollision movePoint');
         const positionInsideCircle = movePointInDirection(
             newCoords,
             getDirection(newCoords, circle),
             verticalStep
         );
-        console.log('resolveCircleCollision adjustDistance');
         newCoords =
             adjustPointsDistance({
                 circle: positionInsideCircle,
@@ -265,14 +255,11 @@ const resolveLineCollision = (
     line: Line,
     shouldGlide: boolean
 ): Point => {
-    const againstMovement = getDirection(circle, circle.previousPositions[0]);
+    const againstMovement = getDirection(circle, circle.previousPosition);
     const minDistance = circle.radius;
     const distanceFn = (point: Point): number =>
         calculateDistanceToLine(point, line);
-    const lastPositionWithoutCollision: Point = findLastPositionWithoutCollision(
-        circle,
-        [line]
-    );
+    const lastPositionWithoutCollision = circle.previousPosition;
     let newCoords =
         adjustPointsDistance({
             circle,
@@ -283,7 +270,7 @@ const resolveLineCollision = (
 
     if (shouldGlide) {
         const projectedPoint1 = projectPointToLine(
-            circle.previousPositions[0],
+            circle.previousPosition,
             line
         );
         const projectedPoint2 = projectPointToLine(circle, line);
@@ -309,12 +296,7 @@ const resolveMultiObjectCollision = (
     circle: GameCircle,
     objects: (Line | Circle)[]
 ): Point => {
-    console.log('resolveMultiObjectCollision');
-    const prevPosition: Point = findLastPositionWithoutCollision(
-        circle,
-        objects
-    );
-    let shouldGlide = true;
+    const prevPosition = circle.previousPosition;
     let newPosition = { x: circle.x, y: circle.y };
     for (const obj of objects) {
         newPosition =
@@ -322,12 +304,12 @@ const resolveMultiObjectCollision = (
                 ? resolveCircleCollision(
                       { ...circle, ...newPosition },
                       obj,
-                      shouldGlide
+                      false
                   )
                 : resolveLineCollision(
                       { ...circle, ...newPosition },
                       obj,
-                      shouldGlide
+                      false
                   );
         const foundCollisions = findCollisions(
             {
@@ -339,36 +321,7 @@ const resolveMultiObjectCollision = (
         if (foundCollisions.length === 0) {
             return newPosition;
         }
-
-        shouldGlide = false;
     }
+
     return prevPosition;
 };
-
-const findLastPositionWithoutCollision = (
-    circle: GameCircle,
-    objects: (Line | Circle)[]
-): Point => {
-    console.log('findLastPositionWithoutCollision');
-    for (const pos of circle.previousPositions) {
-        const foundCollisions = findCollisions(
-            {
-                ...circle,
-                x: pos.x,
-                y: pos.y
-            },
-            objects
-        );
-        if (foundCollisions.length === 0) {
-            return pos;
-        }
-    }
-    console.log('they all fucked(');
-    return circle.previousPositions[0];
-};
-
-// 2 - there's a bug with glide disabled, investigate it
-// 3 - don't glide twice: (
-//     circle collision resolution -> glide ->
-//     wall collision resolution -> circle collision resolution -> no glide!
-// )

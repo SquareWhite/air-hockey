@@ -119,6 +119,7 @@ export const adjustPointsDistance = ({
     targetDistance: number;
     distanceFn: (point: Point) => number;
 }): Point | null => {
+    const MAX_ITER_NUM = 20;
     let { x: newX, y: newY } = circle;
     let { deltaX, deltaY } = direction;
     const {
@@ -135,9 +136,9 @@ export const adjustPointsDistance = ({
 
     let distance = distanceFn(circle);
 
-    console.log(circle, direction);
-    while (Math.abs(targetDistance - distance) >= EPSILON) {
-        console.log(distance, targetDistance);
+    let i = 0;
+    while (Math.abs(targetDistance - distance) >= EPSILON && i < MAX_ITER_NUM) {
+        i++;
         deltaX /= 2;
         deltaY /= 2;
         newX += xDirection * deltaX;
