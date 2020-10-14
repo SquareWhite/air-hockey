@@ -53,14 +53,5 @@ export const store$ = from<any>(store).pipe(
 
 export const collisions$ = store$.pipe(
     map(findCollisionsInState),
-    scan((acc, collisions) => {
-        if (!collisions.length) {
-            return [];
-        }
-        if (!acc.length) {
-            return collisions;
-        }
-        return acc.concat(collisions);
-    }),
     filter((value): value is Collision[] => !!(value && value.length))
 );

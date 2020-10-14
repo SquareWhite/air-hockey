@@ -7,7 +7,7 @@ export const initialState = {
     gameField: {
         lines: [
             {
-                // middle line
+                id: 'middle_line',
                 points: [
                     FIELD_MARGIN,
                     FIELD_HEIGHT / 2 + FIELD_MARGIN,
@@ -16,7 +16,7 @@ export const initialState = {
                 ]
             },
             {
-                // top line
+                id: 'top_line',
                 points: [
                     FIELD_MARGIN,
                     FIELD_MARGIN,
@@ -25,7 +25,7 @@ export const initialState = {
                 ]
             },
             {
-                // left line
+                id: 'left_line',
                 points: [
                     FIELD_MARGIN,
                     FIELD_MARGIN,
@@ -34,7 +34,7 @@ export const initialState = {
                 ]
             },
             {
-                // right line
+                id: 'right_line',
                 points: [
                     FIELD_WIDTH + FIELD_MARGIN,
                     FIELD_MARGIN,
@@ -43,7 +43,7 @@ export const initialState = {
                 ]
             },
             {
-                // bottom line
+                id: 'bottom_line',
                 points: [
                     FIELD_MARGIN,
                     FIELD_HEIGHT + FIELD_MARGIN,
@@ -61,7 +61,7 @@ export const initialState = {
             y: FIELD_HEIGHT * (3 / 4)
         },
         radius: 30,
-        id: 'circle-1'
+        id: 'circle'
     },
     otherCircle: {
         x: FIELD_WIDTH / 2,
@@ -71,7 +71,7 @@ export const initialState = {
             y: FIELD_HEIGHT * (3 / 4)
         },
         radius: 30,
-        id: 'circle-2'
+        id: 'otherCircle'
     }
 };
 
