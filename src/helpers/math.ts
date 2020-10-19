@@ -2,16 +2,17 @@ export interface Point {
     x: number;
     y: number;
 }
-
 export interface Line {
     point1: Point;
     point2: Point;
 }
-
 export interface Circle extends Point {
     radius: number;
 }
-
+export interface Arc extends Circle {
+    angle: number;
+    rotation: number;
+}
 export interface Direction {
     deltaX: number;
     deltaY: number;
@@ -33,6 +34,7 @@ export const calculateDistanceToLine = (point: Point, line: Line): number => {
     return calculateDistance(point, projectedPoint);
 };
 
+// todo: test with point on the line
 export const projectPointToLine = (point: Point, line: Line): Point => {
     let interception: Point;
 
@@ -77,9 +79,9 @@ export const movePointInDirection = (
     const { deltaX, deltaY, xDirection, yDirection } = direction;
     let { x: newX, y: newY } = point;
 
-    if (deltaX === 0) {
+    if (Math.abs(deltaX) < EPSILON) {
         newY = newY + yDirection * distance;
-    } else if (deltaY === 0) {
+    } else if (Math.abs(deltaY) < EPSILON) {
         newX = newX + xDirection * distance;
     } else {
         const tg = deltaY / deltaX;
@@ -95,11 +97,51 @@ export const movePointInDirection = (
     };
 };
 
-export const getDirection = (from: Point, to: Point): Direction => {
-    const deltaX = to.x - from.x;
-    const deltaY = to.y - from.y;
-    const xDirection = deltaX / Math.abs(deltaX) || 0;
-    const yDirection = deltaY / Math.abs(deltaY) || 0;
+type GetDirection = {
+    (from: Point, to: Point): Direction;
+    (angle: number): Direction;
+};
+export const getDirection: GetDirection = (from: any, to?: any) => {
+    let xDirection;
+    let yDirection;
+    let deltaX;
+    let deltaY;
+
+    if (from && to) {
+        deltaX = to.x - from.x;
+        deltaY = to.y - from.y;
+        xDirection = deltaX / Math.abs(deltaX) || 0;
+        yDirection = deltaY / Math.abs(deltaY) || 0;
+    } else {
+        const angle = from % 360;
+        deltaX = Math.cos((angle / 180) * Math.PI) ** 2;
+        deltaY = Math.sin((angle / 180) * Math.PI) ** 2;
+
+        const quartal = Math.floor(angle / 90);
+        switch (quartal) {
+            case 0:
+                xDirection = 1;
+                yDirection = 1;
+                break;
+            case -3:
+            case 1:
+                xDirection = -1;
+                yDirection = 1;
+                break;
+            case 2:
+            case -2:
+                xDirection = -1;
+                yDirection = -1;
+                break;
+            case 3:
+            case -1:
+                xDirection = 1;
+                yDirection = -1;
+                break;
+            default:
+                throw new Error(`Unrecognized quartal: ${quartal}`);
+        }
+    }
     return {
         deltaX,
         deltaY,
@@ -108,77 +150,38 @@ export const getDirection = (from: Point, to: Point): Direction => {
     };
 };
 
-export const adjustPointsDistance = ({
-    circle,
-    direction,
-    targetDistance,
-    distanceFn
-}: {
-    circle: Point;
-    direction: Direction;
-    targetDistance: number;
-    distanceFn: (point: Point) => number;
-}): Point | null => {
-    const MAX_ITER_NUM = 20;
-    let { x: newX, y: newY } = circle;
-    let { deltaX, deltaY } = direction;
-    const {
-        xDirection: xInitialDirection,
-        yDirection: yInitialDirection
-    } = direction;
-    const xOppositeDirection = -xInitialDirection;
-    const yOppositeDirection = -yInitialDirection;
-    let xDirection = xInitialDirection;
-    let yDirection = yInitialDirection;
+export const getArcBeginningAndEnd = (arc: Arc): [Point, Point] => {
+    const arcCenter = { x: arc.x, y: arc.y };
 
-    deltaX = Math.abs(deltaX);
-    deltaY = Math.abs(deltaY);
+    const beginning = movePointInDirection(
+        arcCenter,
+        getDirection(arc.rotation),
+        arc.radius
+    );
+    const end = movePointInDirection(
+        arcCenter,
+        getDirection(arc.rotation + arc.angle),
+        arc.radius
+    );
+    return [beginning, end];
+};
 
-    let distance = distanceFn(circle);
+/**
+ * Measure the smaller angle between three points.
+ * The lines are drawn from p1 to p2 to p3, so the
+ * measured angle is located near p2.
+ */
+export const measureAngle = (p1: Point, p2: Point, p3: Point): number => {
+    const rightAnglePoint = projectPointToLine(p3, { point1: p1, point2: p2 });
+    const sinValue =
+        calculateDistance(p3, rightAnglePoint) / calculateDistance(p3, p2);
+    const angle = (Math.asin(sinValue) / Math.PI) * 180;
 
-    let i = 0;
-    while (Math.abs(targetDistance - distance) >= EPSILON && i < MAX_ITER_NUM) {
-        i++;
-        deltaX /= 2;
-        deltaY /= 2;
-        newX += xDirection * deltaX;
-        newY += yDirection * deltaY;
-
-        distance = distanceFn({ x: newX, y: newY });
-
-        if (distance > targetDistance) {
-            xDirection = xOppositeDirection;
-            yDirection = yOppositeDirection;
-        } else {
-            xDirection = xInitialDirection;
-            yDirection = yInitialDirection;
-        }
-    }
-
-    while (distance < targetDistance) {
-        const shiftedPoint = movePointInDirection(
-            { x: newX, y: newY },
-            {
-                deltaX,
-                deltaY,
-                xDirection: xInitialDirection,
-                yDirection: yInitialDirection
-            },
-            EPSILON * 2
-        );
-        distance = distanceFn(shiftedPoint);
-        newX = shiftedPoint.x;
-        newY = shiftedPoint.y;
-    }
-
-    if (
-        !Number.isNaN(newX) &&
-        !Number.isNaN(newY) &&
-        (Math.abs(circle.x - newX) > EPSILON ||
-            Math.abs(circle.y - newY) > EPSILON)
-    ) {
-        return { x: newX, y: newY };
-    }
-
-    return null;
+    const p1ToRightAngle = calculateDistance(p1, rightAnglePoint);
+    const rightAngleToP2 = calculateDistance(rightAnglePoint, p2);
+    const p1ToP2 = calculateDistance(p1, p2);
+    const measuredAngleIsAccute =
+        Math.abs(p1ToRightAngle + rightAngleToP2 - p1ToP2) < EPSILON ||
+        Math.abs(p1ToRightAngle + p1ToP2 - rightAngleToP2) < EPSILON;
+    return measuredAngleIsAccute ? angle : 180 - angle;
 };

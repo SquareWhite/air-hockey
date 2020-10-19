@@ -23,14 +23,14 @@ export const renderTree = (tree: StateTree) => {
 
     const { circle, otherCircle, gameField } = tree;
 
-    const rect = new Konva.Circle({
+    const player = new Konva.Circle({
         x: circle.x,
         y: circle.y,
         radius: circle.radius,
         fill: 'red',
         id: circle.id
     });
-    const rect2 = new Konva.Circle({
+    const opponent = new Konva.Circle({
         x: otherCircle.x,
         y: otherCircle.y,
         radius: otherCircle.radius,
@@ -38,7 +38,7 @@ export const renderTree = (tree: StateTree) => {
         id: otherCircle.id
     });
 
-    const lines = gameField.lines.map(
+    const fieldLines = gameField.lines.map(
         (line) =>
             new Konva.Line({
                 points: line.points,
@@ -47,9 +47,24 @@ export const renderTree = (tree: StateTree) => {
             })
     );
 
-    mainLayer.add(rect);
-    mainLayer.add(rect2);
-    mainLayer.add(...lines);
+    const fieldRoundedCorners = gameField.arcs.map(
+        (arc) =>
+            new Konva.Arc({
+                x: arc.x,
+                y: arc.y,
+                innerRadius: arc.radius,
+                outerRadius: arc.radius,
+                angle: arc.angle,
+                rotation: arc.rotation,
+                stroke: 'black',
+                strokeWidth: 1
+            })
+    );
+
+    mainLayer.add(player);
+    mainLayer.add(opponent);
+    mainLayer.add(...fieldLines);
+    mainLayer.add(...fieldRoundedCorners);
     stage.add(mainLayer);
     mainLayer.draw();
 };
@@ -61,7 +76,7 @@ export const updateTree = (diff: StateTree) => {
 
     const { x, y, id } = diff.circle;
 
-    const rect = mainLayer.findOne((node: Node) => node.attrs.id === id);
-    rect.absolutePosition({ x, y });
+    const player = mainLayer.findOne((node: Node) => node.attrs.id === id);
+    player.absolutePosition({ x, y });
     mainLayer.draw();
 };

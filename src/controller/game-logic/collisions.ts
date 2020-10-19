@@ -6,15 +6,18 @@ import {
     projectPointToLine,
     movePointInDirection,
     getDirection,
-    adjustPointsDistance,
+    getArcBeginningAndEnd,
+    measureAngle,
     Point,
     Line,
     Circle,
+    Arc,
     EPSILON
 } from '../../helpers/math';
 
 type IdentifiedLine = Line & { id: string };
 type IdentifiedCircle = Circle & { id: string };
+type IdentifiedArc = Arc & { id: string };
 export type LineCollision = {
     type: 'LINE' | 'LINE_CROSS';
     circle: GameCircle;
@@ -25,7 +28,12 @@ export type CircleCollision = {
     circle: GameCircle;
     object: IdentifiedCircle;
 };
-export type Collision = LineCollision | CircleCollision;
+export type ArcCollision = {
+    type: 'ARC' | 'ARC_CROSS';
+    circle: GameCircle;
+    object: IdentifiedArc;
+};
+export type Collision = LineCollision | CircleCollision | ArcCollision;
 
 export const findCollisionsInState = (state: StateTree): Collision[] => {
     if (!state) {
@@ -41,8 +49,9 @@ export const findCollisionsInState = (state: StateTree): Collision[] => {
         };
         return { ...line, id: lineInfo.id };
     });
+    const arcs: IdentifiedArc[] = gameField.arcs;
 
-    return findCollisions(circle, [otherCircle, ...lines]);
+    return findCollisions(circle, [otherCircle, ...lines, ...arcs]);
 };
 
 const findCollisions = (
@@ -51,8 +60,11 @@ const findCollisions = (
 ): Collision[] => {
     let otherCircle: IdentifiedCircle | null = null;
     const lines: IdentifiedLine[] = [];
+    const arcs: IdentifiedArc[] = [];
     objects.forEach((obj) => {
-        if ('radius' in obj) {
+        if ('angle' in obj) {
+            arcs.push(obj);
+        } else if ('radius' in obj) {
             otherCircle = obj;
         } else {
             lines.push(obj);
@@ -62,8 +74,9 @@ const findCollisions = (
     const result: Collision[][] = [
         otherCircle ? findCircleCollisions(circle, otherCircle) : [],
         otherCircle ? findCircleCrossCollisions(circle, otherCircle) : [],
-        findLineCollisions(circle, lines),
-        findLineCrossCollisions(circle, lines)
+        lines.length ? findLineCollisions(circle, lines) : [],
+        lines.length ? findLineCrossCollisions(circle, lines) : [],
+        arcs.length ? findArcCollisions(circle, arcs) : []
     ];
 
     return result
@@ -100,7 +113,11 @@ export const resolveCollisions = (collisions: Collision[]): void => {
         if (collision.type === 'LINE' || collision.type === 'LINE_CROSS') {
             newPosition = resolveLineCollision(collision);
         }
+        if (collision.type === 'ARC') {
+            newPosition = resolveArcCollision(collision);
+        }
     }
+
     // todo -- set default in declaration, not inside the functions
     newPosition && circleMoveAbsolute(newPosition.x, newPosition.y, false);
 };
@@ -150,6 +167,62 @@ const collidesWithLine = (
     const minDistance = circle.radius;
     const distance = calculateDistanceToLine(circle, line);
     return distance < minDistance;
+};
+
+const findArcCollisions = (
+    circle: GameCircle,
+    arcs: IdentifiedArc[]
+): Collision[] => {
+    const collidingArcs: IdentifiedArc[] = [];
+    arcs.forEach((arc) => {
+        if (collidesWithArc(circle, arc)) {
+            collidingArcs.push(arc);
+        }
+    });
+
+    return collidingArcs.length
+        ? collidingArcs.map((arc) => ({
+              type: 'ARC',
+              circle,
+              object: arc
+          }))
+        : [];
+};
+
+const collidesWithArc = (circle: GameCircle, arc: IdentifiedArc): boolean => {
+    const biggerR = Math.max(circle.radius, arc.radius);
+    const smallerR = Math.min(circle.radius, arc.radius);
+    const arcCenter = { x: arc.x, y: arc.y };
+
+    const maxDistance = biggerR + smallerR;
+    const minDistance = biggerR - smallerR;
+    const distance = calculateDistance(circle, arcCenter);
+
+    if (distance > maxDistance || distance < minDistance) {
+        // circle is either too far or inside the arc
+        return false;
+    }
+
+    const [beginningPoint, endingPoint] = getArcBeginningAndEnd(arc);
+    const dstToBeginning = calculateDistance(circle, beginningPoint);
+    const dstToEnding = calculateDistance(circle, endingPoint);
+
+    // beware! there's an edge case with 180-degree arcs
+    // where this won't work correctly
+    const beginningToCircleAngle = measureAngle(
+        beginningPoint,
+        arcCenter,
+        circle
+    );
+    const circleToEndingAngle = measureAngle(circle, arcCenter, endingPoint);
+    const circleIsInsideTheAngle =
+        Math.abs(beginningToCircleAngle + circleToEndingAngle - arc.angle) <
+        EPSILON;
+    const circleContainsAnArcPoint =
+        circle.radius > Math.min(dstToBeginning, dstToEnding) &&
+        circle.radius < Math.max(dstToBeginning, dstToEnding);
+
+    return circleIsInsideTheAngle || circleContainsAnArcPoint;
 };
 
 const findLineCrossCollisions = (
@@ -259,6 +332,23 @@ const resolveCircleCollision = (collision: CircleCollision): Point => {
     return newPosition;
 };
 
+const resolveArcCollision = (collision: ArcCollision): Point => {
+    const { circle, object: arc } = collision;
+
+    const toTheArcsCenter = getDirection(circle, arc);
+    const minDistance = arc.radius - circle.radius;
+    const currentDistance = calculateDistance(circle, arc);
+    let newPosition;
+
+    newPosition = movePointInDirection(
+        circle,
+        toTheArcsCenter,
+        currentDistance - minDistance + EPSILON
+    );
+
+    return newPosition;
+};
+
 const resolveLineCollision = (collision: LineCollision): Point => {
     const { circle, object: line } = collision;
     const minDistance = circle.radius;
@@ -285,6 +375,12 @@ const resolveMultiObjectCollision = (collisions: Collision[]): Point => {
         }
         if (collision.type === 'LINE' || collision.type === 'LINE_CROSS') {
             newPosition = resolveLineCollision({
+                ...collision,
+                circle: { ...circle, ...newPosition }
+            });
+        }
+        if (collision.type === 'ARC') {
+            newPosition = resolveArcCollision({
                 ...collision,
                 circle: { ...circle, ...newPosition }
             });

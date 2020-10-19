@@ -16,7 +16,7 @@
 ### Technical debt:
 
 -   Refactor if (!state) {...}
--   Render the state, and not just the circle
+-   Render the state, and not just the circle. Different layers for static/dynamic stuff
 -   Same for calculating collisions
 -   All state should live in `model`. Magic numbers should be constants or settings
 -   Refactor types
