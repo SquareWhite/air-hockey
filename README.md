@@ -8,7 +8,9 @@
 
 ### Game features:
 
--   Add rounded corners / rounded corner collision for circle
+-   Circle can jump through a little space between the other circle and a wall
+    Also two moving circles may collide poorly (jump through each other).
+    I think this could be fixed with checks for collisions in intermediate points.
 -   Add a puck & make it possible to push it with circle
 -   Puck should collide with outer walls and rounded corners. Not with the middle line
 -   When puck is colliding with things, it's movement direction should change

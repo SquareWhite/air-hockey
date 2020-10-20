@@ -40,8 +40,24 @@ export const arrowLeft$ = keyEvents$.pipe(
 );
 
 export const mouseMove$ = fromEvent<MouseEvent>(
-    document.getElementById('container')!,
+    // document.getElementById('container')!,
+    document.getElementsByClassName('wrapper')!,
     'mousemove'
+).pipe(
+    map((event) => {
+        console.log(`x: ${event.pageX}, y: ${event.pageY}`);
+        const wrapper = document.getElementsByClassName(
+            'wrapper'
+        )[0] as HTMLElement;
+        const container = document.getElementById('container')!;
+        const xCorrection = container.offsetLeft - wrapper.offsetLeft;
+        const yCorrection = container.offsetTop - wrapper.offsetTop;
+        return {
+            ...event,
+            correctedX: event.pageX - xCorrection,
+            correctedY: event.pageY - yCorrection
+        };
+    })
 );
 
 // from() doesn't work with redux store on the current versions

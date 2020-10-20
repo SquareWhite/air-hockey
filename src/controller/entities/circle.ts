@@ -23,17 +23,18 @@ mouseMove$.subscribe((event) => {
     if (!state) {
         return;
     }
+    console.log(`x: ${event.correctedX}, y: ${event.correctedY}`);
     const distance = calculateDistance(state.circle, {
-        x: event.offsetX,
-        y: event.offsetY
+        x: event.correctedX,
+        y: event.correctedY
     });
 
     let movementVector;
     if (distance < state.circle.radius / 3) {
         movementVector = { x: 0, y: 0 };
     } else {
-        const deltaX = state.circle.x - event.offsetX;
-        const deltaY = state.circle.y - event.offsetY;
+        const deltaX = state.circle.x - event.correctedX;
+        const deltaY = state.circle.y - event.correctedY;
         const sqSine = (deltaY / distance) ** 2;
         const sqCosine = (deltaX / distance) ** 2;
         const xDirection = -deltaX / Math.abs(deltaX);
