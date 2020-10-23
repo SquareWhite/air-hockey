@@ -21,50 +21,57 @@ export const renderTree = (tree: StateTree) => {
         return;
     }
 
-    const { circle, otherCircle, gameField } = tree;
+    const objects = [];
+    const { circles, lines, arcs } = tree;
 
-    const player = new Konva.Circle({
-        x: circle.x,
-        y: circle.y,
-        radius: circle.radius,
-        fill: 'red',
-        id: circle.id
-    });
-    const opponent = new Konva.Circle({
-        x: otherCircle.x,
-        y: otherCircle.y,
-        radius: otherCircle.radius,
-        fill: 'green',
-        id: otherCircle.id
-    });
+    for (const key in circles) {
+        if (circles.hasOwnProperty(key)) {
+            const circle = circles[key];
+            const position = tree.positions.current[circle.position];
+            objects.push(
+                new Konva.Circle({
+                    x: position.x,
+                    y: position.y,
+                    radius: circle.radius,
+                    stroke: 'black',
+                    strokeWidth: 1,
+                    id: key
+                })
+            );
+        }
+    }
 
-    const fieldLines = gameField.lines.map(
-        (line) =>
-            new Konva.Line({
-                points: line.points,
-                stroke: 'black',
-                strokeWidth: 1
-            })
-    );
+    for (const key in lines) {
+        if (lines.hasOwnProperty(key)) {
+            const line = lines[key];
+            objects.push(
+                new Konva.Line({
+                    points: line.points,
+                    stroke: 'black',
+                    strokeWidth: 1
+                })
+            );
+        }
+    }
 
-    const fieldRoundedCorners = gameField.arcs.map(
-        (arc) =>
-            new Konva.Arc({
-                x: arc.x,
-                y: arc.y,
-                innerRadius: arc.radius,
-                outerRadius: arc.radius,
-                angle: arc.angle,
-                rotation: arc.rotation,
-                stroke: 'black',
-                strokeWidth: 1
-            })
-    );
+    for (const key in arcs) {
+        if (arcs.hasOwnProperty(key)) {
+            const arc = arcs[key];
+            objects.push(
+                new Konva.Arc({
+                    ...tree.positions.current[arc.position],
+                    innerRadius: arc.radius,
+                    outerRadius: arc.radius,
+                    angle: arc.angle,
+                    rotation: arc.rotation,
+                    stroke: 'black',
+                    strokeWidth: 1
+                })
+            );
+        }
+    }
 
-    mainLayer.add(player);
-    mainLayer.add(opponent);
-    mainLayer.add(...fieldLines);
-    mainLayer.add(...fieldRoundedCorners);
+    mainLayer.add(...objects);
     stage.add(mainLayer);
     mainLayer.draw();
 };
@@ -74,9 +81,11 @@ export const updateTree = (diff: StateTree) => {
         return;
     }
 
-    const { x, y, id } = diff.circle;
+    const id = 'circle';
+    const circle = diff.circles[id];
+    const newPosition = diff.positions.current[circle.position];
 
     const player = mainLayer.findOne((node: Node) => node.attrs.id === id);
-    player.absolutePosition({ x, y });
+    player.absolutePosition(newPosition);
     mainLayer.draw();
 };

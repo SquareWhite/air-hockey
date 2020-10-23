@@ -6,7 +6,8 @@ export interface Line {
     point1: Point;
     point2: Point;
 }
-export interface Circle extends Point {
+export interface Circle {
+    position: Point;
     radius: number;
 }
 export interface Arc extends Circle {
@@ -151,7 +152,7 @@ export const getDirection: GetDirection = (from: any, to?: any) => {
 };
 
 export const getArcBeginningAndEnd = (arc: Arc): [Point, Point] => {
-    const arcCenter = { x: arc.x, y: arc.y };
+    const arcCenter = arc.position;
 
     const beginning = movePointInDirection(
         arcCenter,

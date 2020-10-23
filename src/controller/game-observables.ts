@@ -1,21 +1,5 @@
-import {
-    Observable,
-    fromEvent,
-    merge,
-    interval,
-    Subscription,
-    from,
-    Subscribable,
-    pipe
-} from 'rxjs';
-import {
-    distinctUntilChanged,
-    share,
-    filter,
-    throttleTime,
-    map,
-    scan
-} from 'rxjs/operators';
+import { fromEvent, merge, interval, from } from 'rxjs';
+import { distinctUntilChanged, share, filter, map } from 'rxjs/operators';
 
 import { store } from '../model/store';
 import { StateTree } from '../model/initial-state';
@@ -40,12 +24,10 @@ export const arrowLeft$ = keyEvents$.pipe(
 );
 
 export const mouseMove$ = fromEvent<MouseEvent>(
-    // document.getElementById('container')!,
     document.getElementsByClassName('wrapper')!,
     'mousemove'
 ).pipe(
     map((event) => {
-        console.log(`x: ${event.pageX}, y: ${event.pageY}`);
         const wrapper = document.getElementsByClassName(
             'wrapper'
         )[0] as HTMLElement;

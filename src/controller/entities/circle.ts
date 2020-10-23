@@ -1,21 +1,12 @@
-import {
-    arrowRight$,
-    arrowLeft$,
-    mouseMove$,
-    store$
-} from '../game-observables';
+import { mouseMove$ } from '../game-observables';
 import { createMoveFunction } from '../game-logic/movement';
 import { store } from '../../model/store';
 import { calculateDistance } from '../../helpers/math';
-import {
-    circleMove,
-    circleMoveAbsolute
-} from '../../model/action-creators/circle';
-import { StateTree } from '../../model/initial-state';
 
 const startMovement = createMoveFunction({
     baseVelocity: 4,
-    maxVelocity: 20
+    maxVelocity: 20,
+    id: 'circle'
 });
 
 mouseMove$.subscribe((event) => {
@@ -23,18 +14,25 @@ mouseMove$.subscribe((event) => {
     if (!state) {
         return;
     }
-    console.log(`x: ${event.correctedX}, y: ${event.correctedY}`);
-    const distance = calculateDistance(state.circle, {
+
+    const circleRecord = state.circles.circle;
+    const circle = {
+        ...circleRecord,
+        position: state.positions.current[circleRecord.position],
+        previousPosition:
+            state.positions.previous[circleRecord.previousPosition]
+    };
+    const distance = calculateDistance(circle.position, {
         x: event.correctedX,
         y: event.correctedY
     });
 
     let movementVector;
-    if (distance < state.circle.radius / 3) {
+    if (distance < circle.radius / 3) {
         movementVector = { x: 0, y: 0 };
     } else {
-        const deltaX = state.circle.x - event.correctedX;
-        const deltaY = state.circle.y - event.correctedY;
+        const deltaX = circle.position.x - event.correctedX;
+        const deltaY = circle.position.y - event.correctedY;
         const sqSine = (deltaY / distance) ** 2;
         const sqCosine = (deltaX / distance) ** 2;
         const xDirection = -deltaX / Math.abs(deltaX);
@@ -45,5 +43,5 @@ mouseMove$.subscribe((event) => {
         };
     }
 
-    startMovement(circleMove, movementVector, distance);
+    startMovement(movementVector, distance);
 });
