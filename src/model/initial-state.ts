@@ -5,29 +5,39 @@ export const FIELD_EDGE_RADIUS = 50;
 export const CORNER_RADIUS = 90;
 
 export type GameCircle = {
-    position: { x: number; y: number };
-    previousPosition: { x: number; y: number };
-    radius: number;
     id: string;
+    position: {
+        id: string;
+        x: number;
+        y: number;
+    };
+    previousPosition: {
+        id: string;
+        x: number;
+        y: number;
+    };
+    movement: {
+        id: string;
+        directionVector: {
+            x: number;
+            y: number;
+        };
+        velocity: number;
+    };
+    radius: number;
 };
 
 export type StateTree = {
     positions: {
-        current: {
-            [key: string]: {
-                x: number;
-                y: number;
-            };
-        };
-        previous: {
-            [key: string]: {
-                x: number;
-                y: number;
-            };
+        [key: string]: {
+            id: string;
+            x: number;
+            y: number;
         };
     };
     movements: {
         [key: string]: {
+            id: string;
             directionVector: {
                 x: number;
                 y: number;
@@ -37,11 +47,13 @@ export type StateTree = {
     };
     lines: {
         [key: string]: {
+            id: string;
             points: number[];
         };
     };
     arcs: {
         [key: string]: {
+            id: string;
             position: string;
             radius: number;
             angle: number;
@@ -50,6 +62,7 @@ export type StateTree = {
     };
     circles: {
         [key: string]: {
+            id: string;
             position: string;
             previousPosition: string;
             movement: string;
@@ -61,45 +74,50 @@ export type StateTree = {
 
 export const initialState: StateTree = {
     positions: {
-        current: {
-            circlePos: {
-                x: FIELD_WIDTH / 2 + 100,
-                y: FIELD_HEIGHT * (3 / 4)
-            },
-            otherCirclePos: {
-                x: FIELD_WIDTH / 2,
-                y: FIELD_HEIGHT * (3 / 4)
-            },
-            topLeftCornerPos: {
-                x: CORNER_RADIUS + FIELD_MARGIN,
-                y: FIELD_MARGIN + CORNER_RADIUS
-            },
-            topRightCornerPos: {
-                x: FIELD_WIDTH + FIELD_MARGIN - CORNER_RADIUS,
-                y: FIELD_MARGIN + CORNER_RADIUS
-            },
-            bottomLeftCornerPos: {
-                x: CORNER_RADIUS + FIELD_MARGIN,
-                y: FIELD_HEIGHT + FIELD_MARGIN - CORNER_RADIUS
-            },
-            bottomRightCornerPos: {
-                x: FIELD_WIDTH + FIELD_MARGIN - CORNER_RADIUS,
-                y: FIELD_HEIGHT + FIELD_MARGIN - CORNER_RADIUS
-            }
+        circlePos: {
+            id: 'circlePos',
+            x: FIELD_WIDTH / 2 + 100,
+            y: FIELD_HEIGHT * (3 / 4)
         },
-        previous: {
-            circlePos: {
-                x: FIELD_WIDTH / 2 + 100,
-                y: FIELD_HEIGHT * (3 / 4)
-            },
-            otherCirclePos: {
-                x: FIELD_WIDTH / 2,
-                y: FIELD_HEIGHT * (3 / 4)
-            }
+        otherCirclePos: {
+            id: 'otherCirclePos',
+            x: FIELD_WIDTH / 2,
+            y: FIELD_HEIGHT * (3 / 4)
+        },
+        topLeftCornerPos: {
+            id: 'topLeftCornerPos',
+            x: CORNER_RADIUS + FIELD_MARGIN,
+            y: FIELD_MARGIN + CORNER_RADIUS
+        },
+        topRightCornerPos: {
+            id: 'topRightCornerPos',
+            x: FIELD_WIDTH + FIELD_MARGIN - CORNER_RADIUS,
+            y: FIELD_MARGIN + CORNER_RADIUS
+        },
+        bottomLeftCornerPos: {
+            id: 'bottomLeftCornerPos',
+            x: CORNER_RADIUS + FIELD_MARGIN,
+            y: FIELD_HEIGHT + FIELD_MARGIN - CORNER_RADIUS
+        },
+        bottomRightCornerPos: {
+            id: 'bottomRightCornerPos',
+            x: FIELD_WIDTH + FIELD_MARGIN - CORNER_RADIUS,
+            y: FIELD_HEIGHT + FIELD_MARGIN - CORNER_RADIUS
+        },
+        circlePrevPos: {
+            id: 'circlePrevPos',
+            x: FIELD_WIDTH / 2 + 100,
+            y: FIELD_HEIGHT * (3 / 4)
+        },
+        otherCirclePrevPos: {
+            id: 'otherCirclePrevPos',
+            x: FIELD_WIDTH / 2,
+            y: FIELD_HEIGHT * (3 / 4)
         }
     },
     movements: {
         circleMovement: {
+            id: 'circleMovement',
             velocity: 0,
             directionVector: {
                 x: 0,
@@ -109,6 +127,7 @@ export const initialState: StateTree = {
     },
     lines: {
         topLine: {
+            id: 'topLine',
             points: [
                 FIELD_MARGIN + CORNER_RADIUS,
                 FIELD_MARGIN,
@@ -117,6 +136,7 @@ export const initialState: StateTree = {
             ]
         },
         leftLine: {
+            id: 'leftLine',
             points: [
                 FIELD_MARGIN,
                 FIELD_MARGIN + CORNER_RADIUS,
@@ -125,6 +145,7 @@ export const initialState: StateTree = {
             ]
         },
         rightLine: {
+            id: 'rightLine',
             points: [
                 FIELD_WIDTH + FIELD_MARGIN,
                 FIELD_MARGIN + CORNER_RADIUS,
@@ -133,6 +154,7 @@ export const initialState: StateTree = {
             ]
         },
         middleLine: {
+            id: 'middleLine',
             points: [
                 FIELD_MARGIN,
                 FIELD_HEIGHT / 2 + FIELD_MARGIN,
@@ -141,6 +163,7 @@ export const initialState: StateTree = {
             ]
         },
         bottomLine: {
+            id: 'bottomLine',
             points: [
                 FIELD_MARGIN + CORNER_RADIUS,
                 FIELD_HEIGHT + FIELD_MARGIN,
@@ -151,24 +174,28 @@ export const initialState: StateTree = {
     },
     arcs: {
         topLeftCorner: {
+            id: 'topLeftCorner',
             position: 'topLeftCornerPos',
             radius: CORNER_RADIUS,
             angle: 90,
             rotation: 180
         },
         topRightCorner: {
+            id: 'topRightCorner',
             position: 'topRightCornerPos',
             radius: CORNER_RADIUS,
             angle: 90,
             rotation: 270
         },
         bottomLeftCorner: {
+            id: 'bottomLeftCorner',
             position: 'bottomLeftCornerPos',
             radius: CORNER_RADIUS,
             angle: 90,
             rotation: 90
         },
         bottomRightCorner: {
+            id: 'bottomRightCorner',
             position: 'bottomRightCornerPos',
             radius: CORNER_RADIUS,
             angle: 90,
@@ -177,14 +204,16 @@ export const initialState: StateTree = {
     },
     circles: {
         circle: {
+            id: 'circle',
             position: 'circlePos',
-            previousPosition: 'circlePos',
+            previousPosition: 'circlePrevPos',
             movement: 'circleMovement',
             radius: 30
         },
         otherCircle: {
+            id: 'otherCircle',
             position: 'otherCirclePos',
-            previousPosition: 'otherCirclePos',
+            previousPosition: 'otherCirclePrevPos',
             movement: 'otherCircleMovement',
             radius: 30
         }

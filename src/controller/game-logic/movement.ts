@@ -1,6 +1,8 @@
 import { gameClock$ } from '../game-observables';
 import { moveCircle } from '../../model/action-creators';
 import { store } from '../../model/store';
+import { GameCircle } from '../../model/initial-state';
+import { denormalize } from '../../model/denormalize';
 
 export const createMoveFunction = ({
     baseVelocity = 1,
@@ -11,17 +13,11 @@ export const createMoveFunction = ({
         throw new Error('id required!');
     }
 
-    const info = {
-        velocity: baseVelocity,
-        directionVector: {
-            x: 0,
-            y: 0
-        }
-    };
-
     const state = store.getState();
-    const movementId = state.circles[id].movement;
-    const positionId = state.circles[id].position;
+    const circle: GameCircle = denormalize(state, state.circles[id]);
+
+    // TODO: should this stuff here update state??
+    const info = circle.movement;
 
     let stopMovingFn: (() => void) | null;
     let distanceToTarget = 0;

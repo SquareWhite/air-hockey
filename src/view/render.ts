@@ -6,6 +6,8 @@ import {
     FIELD_HEIGHT
 } from '../model/initial-state';
 import { Node } from 'konva/types/Node';
+import { denormalize } from '../model/denormalize';
+import { Shape } from 'konva/types/Shape';
 
 const stage = new Konva.Stage({
     container: 'container', // id of container <div>
@@ -21,55 +23,43 @@ export const renderTree = (tree: StateTree) => {
         return;
     }
 
-    const objects = [];
-    const { circles, lines, arcs } = tree;
+    const objects: Shape[] = [];
 
-    for (const key in circles) {
-        if (circles.hasOwnProperty(key)) {
-            const circle = circles[key];
-            const position = tree.positions.current[circle.position];
-            objects.push(
-                new Konva.Circle({
-                    x: position.x,
-                    y: position.y,
-                    radius: circle.radius,
-                    stroke: 'black',
-                    strokeWidth: 1,
-                    id: key
-                })
-            );
-        }
-    }
+    denormalize(tree, tree.circles).forEach((circle) =>
+        objects.push(
+            new Konva.Circle({
+                ...circle.position,
+                radius: circle.radius,
+                stroke: 'black',
+                strokeWidth: 1,
+                id: circle.id
+            })
+        )
+    );
 
-    for (const key in lines) {
-        if (lines.hasOwnProperty(key)) {
-            const line = lines[key];
-            objects.push(
-                new Konva.Line({
-                    points: line.points,
-                    stroke: 'black',
-                    strokeWidth: 1
-                })
-            );
-        }
-    }
+    denormalize(tree, tree.lines).forEach((line) =>
+        objects.push(
+            new Konva.Line({
+                points: line.points,
+                stroke: 'black',
+                strokeWidth: 1
+            })
+        )
+    );
 
-    for (const key in arcs) {
-        if (arcs.hasOwnProperty(key)) {
-            const arc = arcs[key];
-            objects.push(
-                new Konva.Arc({
-                    ...tree.positions.current[arc.position],
-                    innerRadius: arc.radius,
-                    outerRadius: arc.radius,
-                    angle: arc.angle,
-                    rotation: arc.rotation,
-                    stroke: 'black',
-                    strokeWidth: 1
-                })
-            );
-        }
-    }
+    denormalize(tree, tree.arcs).forEach((arc) =>
+        objects.push(
+            new Konva.Arc({
+                ...arc.position,
+                innerRadius: arc.radius,
+                outerRadius: arc.radius,
+                angle: arc.angle,
+                rotation: arc.rotation,
+                stroke: 'black',
+                strokeWidth: 1
+            })
+        )
+    );
 
     mainLayer.add(...objects);
     stage.add(mainLayer);
@@ -81,11 +71,11 @@ export const updateTree = (diff: StateTree) => {
         return;
     }
 
-    const id = 'circle';
-    const circle = diff.circles[id];
-    const newPosition = diff.positions.current[circle.position];
+    const circle = denormalize(diff, diff.circles.circle);
 
-    const player = mainLayer.findOne((node: Node) => node.attrs.id === id);
-    player.absolutePosition(newPosition);
+    const player = mainLayer.findOne(
+        (node: Node) => node.attrs.id === circle.id
+    );
+    player.absolutePosition(circle.position);
     mainLayer.draw();
 };

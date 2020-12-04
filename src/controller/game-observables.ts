@@ -45,11 +45,24 @@ export const mouseMove$ = fromEvent<MouseEvent>(
 // from() doesn't work with redux store on the current versions
 // https://github.com/reduxjs/redux/issues/3586
 export const store$ = from<any>(store).pipe(
-    share(),
-    map((value) => value as StateTree)
+    map((value) => value as StateTree),
+    share()
 );
 
-export const collisions$ = store$.pipe(
+let latestPositions: StateTree['positions'] | undefined;
+export const positionUpdates$ = store$.pipe(
+    filter((state) => {
+        if (state.positions === latestPositions) {
+            return false;
+        } else {
+            latestPositions = state.positions;
+            return true;
+        }
+    }),
+    share()
+);
+
+export const collisions$ = positionUpdates$.pipe(
     map(findCollisionsInState),
     filter((value): value is Collision[] => !!(value && value.length))
 );

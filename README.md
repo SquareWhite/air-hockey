@@ -24,7 +24,7 @@
 
 ### Technical debt:
 
--   Refactor if (!state) {...}
+-   separate previous positions in state look bad
 -   Render the state, and not just the circle.
     Different layers for static/dynamic stuff.
     Render diffs! If something's not moving - don't render it!

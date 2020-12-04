@@ -1,9 +1,9 @@
-import { CHANGE_POSITION_RELATIVE, CHANGE_POSITION } from './action-types';
+import { MOVE_CIRCLE, MOVE_CIRCLE_ABSOLUTE } from './action-types';
 import { store } from './store';
 
 export const moveCircle = (circleId: string, stepX: number, stepY: number) =>
     store.dispatch({
-        type: CHANGE_POSITION_RELATIVE,
+        type: MOVE_CIRCLE,
         payload: { circleId, stepX, stepY }
     });
 
@@ -14,7 +14,7 @@ export const moveCircleAbsolute = (
     shouldSetPrev: boolean
 ) =>
     store.dispatch({
-        type: CHANGE_POSITION,
+        type: MOVE_CIRCLE_ABSOLUTE,
         payload: {
             circleId,
             x,

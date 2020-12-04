@@ -2,6 +2,8 @@ import { mouseMove$ } from '../game-observables';
 import { createMoveFunction } from '../game-logic/movement';
 import { store } from '../../model/store';
 import { calculateDistance } from '../../helpers/math';
+import { denormalize } from '../../model/denormalize';
+import { GameCircle } from '../../model/initial-state';
 
 const startMovement = createMoveFunction({
     baseVelocity: 4,
@@ -11,17 +13,8 @@ const startMovement = createMoveFunction({
 
 mouseMove$.subscribe((event) => {
     const state = store.getState();
-    if (!state) {
-        return;
-    }
 
-    const circleRecord = state.circles.circle;
-    const circle = {
-        ...circleRecord,
-        position: state.positions.current[circleRecord.position],
-        previousPosition:
-            state.positions.previous[circleRecord.previousPosition]
-    };
+    const circle: GameCircle = denormalize(state, state.circles.circle);
     const distance = calculateDistance(circle.position, {
         x: event.correctedX,
         y: event.correctedY

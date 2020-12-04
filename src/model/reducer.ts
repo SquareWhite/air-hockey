@@ -1,6 +1,7 @@
 import { Reducer } from 'redux';
 
-import { CHANGE_POSITION_RELATIVE, CHANGE_POSITION } from './action-types';
+import { MOVE_CIRCLE, MOVE_CIRCLE_ABSOLUTE } from './action-types';
+import { denormalize } from './denormalize';
 import { StateTree, initialState } from './initial-state';
 
 export interface Action {
@@ -12,67 +13,59 @@ export const reducer: Reducer<StateTree, Action> = (
     state = initialState,
     action
 ) => {
-    if (action.type === CHANGE_POSITION_RELATIVE) {
+    if (action.type === MOVE_CIRCLE) {
         const circleId = action.payload.circleId;
-        const positionId = state.circles[circleId].position;
-        const currentPosition = {
-            x: state.positions.current[positionId].x,
-            y: state.positions.current[positionId].y
-        };
+        const circle = denormalize(state, state.circles[circleId]);
 
-        const newPrevPosition = currentPosition;
         const newPosition = {
-            x: currentPosition.x + action.payload.stepX,
-            y: currentPosition.y + action.payload.stepY
+            id: circle.position.id,
+            x: circle.position.x + action.payload.stepX,
+            y: circle.position.y + action.payload.stepY
+        };
+        const newPrevPosition = {
+            ...circle.position,
+            id: circle.previousPosition.id
         };
 
         return {
             ...state,
             positions: {
-                current: {
-                    ...state.positions.current,
-                    [positionId]: newPosition
-                },
-                previous: {
-                    ...state.positions.previous,
-                    [positionId]: newPrevPosition
-                        ? newPrevPosition
-                        : state.positions.previous[positionId]
-                }
+                ...state.positions,
+                [circle.position.id]: newPosition,
+                [circle.previousPosition.id]: newPrevPosition
+                    ? newPrevPosition
+                    : state.positions[circle.previousPosition.id]
             },
             lastRenderDate: new Date()
         };
     }
 
-    if (action.type === CHANGE_POSITION) {
+    if (action.type === MOVE_CIRCLE_ABSOLUTE) {
         const circleId = action.payload.circleId;
-        const positionId = state.circles[circleId].position;
-        const currentPosition = {
-            x: state.positions.current[positionId].x,
-            y: state.positions.current[positionId].y
+        const circle = denormalize(state, state.circles[circleId]);
+
+        const newPosition = {
+            id: circle.position.id,
+            x: action.payload.x,
+            y: action.payload.y
         };
 
         let newPrevPosition;
         if (action.payload.shouldSetPrev) {
-            newPrevPosition = currentPosition;
+            newPrevPosition = {
+                ...circle.position,
+                id: circle.previousPosition.id
+            };
         }
-        const newPosition = {
-            x: action.payload.x,
-            y: action.payload.y
-        };
+
         return {
             ...state,
             positions: {
-                current: {
-                    ...state.positions.current,
-                    [positionId]: newPosition
-                },
-                previous: {
-                    ...state.positions.previous,
-                    [positionId]: newPrevPosition
-                        ? newPrevPosition
-                        : state.positions.previous[positionId]
-                }
+                ...state.positions,
+                [circle.position.id]: newPosition,
+                [circle.previousPosition.id]: newPrevPosition
+                    ? newPrevPosition
+                    : state.positions[circle.previousPosition.id]
             },
             lastRenderDate: new Date()
         };
