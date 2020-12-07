@@ -69,14 +69,18 @@ export const resolveCollisions = (collisions: Collision[]): void => {
         newPosition = _resolveMultiObjectCollision(collisions);
     } else {
         const collision = collisions[0];
-        if (collision.type === 'CIRCLE' || collision.type === 'CIRCLE_CROSS') {
-            newPosition = _resolveCircleCollision(collision);
-        }
-        if (collision.type === 'LINE' || collision.type === 'LINE_CROSS') {
-            newPosition = _resolveLineCollision(collision);
-        }
-        if (collision.type === 'ARC') {
-            newPosition = _resolveArcCollision(collision);
+        switch (collision.type) {
+            case 'CIRCLE':
+            case 'CIRCLE_CROSS':
+                newPosition = _resolveCircleCollision(collision);
+                break;
+            case 'LINE':
+            case 'LINE_CROSS':
+                newPosition = _resolveLineCollision(collision);
+                break;
+            case 'ARC':
+                newPosition = _resolveArcCollision(collision);
+                break;
         }
     }
 
@@ -93,7 +97,7 @@ export const resolveCollisions = (collisions: Collision[]): void => {
 
 const _findCollisions = (
     circle: GameCircle,
-    objects: (IdentifiedLine | IdentifiedCircle)[]
+    objects: (IdentifiedLine | IdentifiedCircle | IdentifiedArc)[]
 ): Collision[] => {
     let otherCircle: IdentifiedCircle | null = null;
     const lines: IdentifiedLine[] = [];
@@ -126,8 +130,10 @@ const _findCollisions = (
             if (!sameObjCollision) {
                 uniqueCollisions.push(collision);
             } else if (collision.type === 'LINE_CROSS') {
-                // prioritize line crosses over regular collisions
-                // as they are relevent for logic in resolveLineCollision
+                /*
+                 prioritize line crosses over regular collisions
+                 as they are relevent for logic in resolveLineCollision
+                 */
                 sameObjCollision.type = 'LINE_CROSS';
             }
             return uniqueCollisions;
@@ -219,8 +225,10 @@ const _collidesWithArc = (circle: GameCircle, arc: IdentifiedArc): boolean => {
     const dstToBeginning = calculateDistance(circle.position, beginningPoint);
     const dstToEnding = calculateDistance(circle.position, endingPoint);
 
-    // beware! there's an edge case with 180-degree arcs
-    // where this won't work correctly
+    /*
+     beware! there's an edge case with 180-degree arcs
+     where this won't work correctly
+     */
     const beginningToCircleAngle = measureAngle(
         beginningPoint,
         arcCenter,
@@ -407,23 +415,27 @@ const _resolveMultiObjectCollision = (
     const prevPosition = circle.previousPosition;
     let newPosition = circle.position;
     for (const collision of collisions) {
-        if (collision.type === 'CIRCLE' || collision.type === 'CIRCLE_CROSS') {
-            newPosition = _resolveCircleCollision({
-                ...collision,
-                circle: { ...circle, position: newPosition }
-            });
-        }
-        if (collision.type === 'LINE' || collision.type === 'LINE_CROSS') {
-            newPosition = _resolveLineCollision({
-                ...collision,
-                circle: { ...circle, position: newPosition }
-            });
-        }
-        if (collision.type === 'ARC') {
-            newPosition = _resolveArcCollision({
-                ...collision,
-                circle: { ...circle, position: newPosition }
-            });
+        switch (collision.type) {
+            case 'CIRCLE':
+            case 'CIRCLE_CROSS':
+                newPosition = _resolveCircleCollision({
+                    ...collision,
+                    circle: { ...circle, position: newPosition }
+                });
+                break;
+            case 'LINE':
+            case 'LINE_CROSS':
+                newPosition = _resolveLineCollision({
+                    ...collision,
+                    circle: { ...circle, position: newPosition }
+                });
+                break;
+            case 'ARC':
+                newPosition = _resolveArcCollision({
+                    ...collision,
+                    circle: { ...circle, position: newPosition }
+                });
+                break;
         }
         const foundCollisions = _findCollisions(
             {

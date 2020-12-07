@@ -4,6 +4,21 @@ export const FIELD_MARGIN = 100;
 export const FIELD_EDGE_RADIUS = 50;
 export const CORNER_RADIUS = 90;
 
+export type Identifiable = {
+    id: string;
+};
+
+export type Movable = {
+    movement: {
+        id: string;
+        directionVector: {
+            x: number;
+            y: number;
+        };
+        velocity: number;
+    };
+};
+
 export type GameCircle = {
     id: string;
     position: {
@@ -16,16 +31,8 @@ export type GameCircle = {
         x: number;
         y: number;
     };
-    movement: {
-        id: string;
-        directionVector: {
-            x: number;
-            y: number;
-        };
-        velocity: number;
-    };
     radius: number;
-};
+} & Movable;
 
 export type StateTree = {
     positions: {

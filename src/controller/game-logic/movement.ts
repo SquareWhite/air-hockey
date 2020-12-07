@@ -1,83 +1,116 @@
 import { gameClock$ } from '../game-observables';
 import { moveCircle } from '../../model/action-creators';
-import { store } from '../../model/store';
-import { GameCircle } from '../../model/initial-state';
-import { denormalize } from '../../model/denormalize';
+import { Identifiable, Movable } from '../../model/initial-state';
 
-export const createMoveFunction = ({
+type MoveFunction = (
+    direction: { x: number; y: number },
+    distance: number
+) => void;
+
+type CreateMoveFunction = ({
+    baseVelocity,
+    maxVelocity,
+    entity
+}: {
+    baseVelocity: number;
+    maxVelocity: number;
+    entity: Movable & Identifiable;
+}) => MoveFunction;
+
+export const createMoveFunction: CreateMoveFunction = ({
     baseVelocity = 1,
     maxVelocity = 100,
-    id = ''
+    entity = null
 }) => {
-    if (!id) {
-        throw new Error('id required!');
+    if (!entity) {
+        throw new Error('parameter entity is required!');
     }
 
-    const state = store.getState();
-    const circle: GameCircle = denormalize(state, state.circles[id]);
-
-    // TODO: should this stuff here update state??
-    const info = circle.movement;
+    const { id, movement } = entity;
 
     let stopMovingFn: (() => void) | null;
+    let isMoving = false;
     let distanceToTarget = 0;
     let currentDistance = 0;
 
-    return (direction: { x: number; y: number }, distance: number) => {
-        info.directionVector = direction;
+    return (direction, distance) => {
+        movement.directionVector = direction;
         distanceToTarget = distance;
         currentDistance = distanceToTarget;
 
-        const shouldStartMoving =
-            info.directionVector.x !== 0 || info.directionVector.y !== 0;
+        const shouldBeMoving =
+            movement.directionVector.x !== 0 ||
+            movement.directionVector.y !== 0;
 
-        if (shouldStartMoving && !stopMovingFn) {
-            const accelaration = gameClock$.subscribe(() => {
+        if (shouldBeMoving && !isMoving) {
+            const accelerationSubscription = gameClock$.subscribe(() => {
                 if (currentDistance <= 0) {
                     stopMovingFn && stopMovingFn();
                     stopMovingFn = null;
-                    return;
-                }
-
-                const distanceProportion = Math.abs(
-                    currentDistance / distanceToTarget
-                );
-                if (currentDistance > 200) {
-                    info.velocity = maxVelocity * 4;
-                } else if (currentDistance < 50) {
-                    info.velocity = baseVelocity;
-                } else if (currentDistance < 100) {
-                    info.velocity =
-                        baseVelocity + (1 / 4) * (maxVelocity - baseVelocity);
-                } else if (distanceProportion > 0.8) {
-                    info.velocity = maxVelocity;
-                } else if (distanceProportion > 0.5 || currentDistance > 100) {
-                    info.velocity =
-                        baseVelocity + (1 / 2) * (maxVelocity - baseVelocity);
-                } else if (distanceProportion > 0.2) {
-                    info.velocity =
-                        baseVelocity + (1 / 4) * (maxVelocity - baseVelocity);
                 } else {
-                    info.velocity = baseVelocity;
+                    movement.velocity = _calculateVelocity(
+                        currentDistance,
+                        distanceToTarget,
+                        baseVelocity,
+                        maxVelocity
+                    );
                 }
             });
+
             const movementSubscription = gameClock$.subscribe(() => {
-                currentDistance -= Math.min(distanceToTarget, info.velocity);
+                const step = Math.min(distanceToTarget, movement.velocity);
+                currentDistance -= step;
+
+                // todo -- updatePositions
                 moveCircle(
                     id,
-                    info.directionVector.x * info.velocity,
-                    info.directionVector.y * info.velocity
+                    movement.directionVector.x * step,
+                    movement.directionVector.y * step
                 );
             });
+
             stopMovingFn = () => {
-                accelaration.unsubscribe();
+                accelerationSubscription.unsubscribe();
                 movementSubscription.unsubscribe();
-                info.velocity = baseVelocity;
+                movement.velocity = baseVelocity;
+                isMoving = false;
             };
+            isMoving = true;
         }
-        if (!shouldStartMoving) {
+        if (!shouldBeMoving && isMoving) {
             stopMovingFn && stopMovingFn();
             stopMovingFn = null;
         }
     };
+};
+
+const _calculateVelocity = (
+    currentDistance: number,
+    distanceToTarget: number,
+    baseVelocity: number,
+    maxVelocity: number
+): number => {
+    const distanceProportion = Math.abs(currentDistance / distanceToTarget);
+
+    switch (true) {
+        case currentDistance > 200:
+            return maxVelocity * 4;
+
+        case currentDistance < 50:
+            return baseVelocity;
+
+        case currentDistance < 100:
+            return baseVelocity + (1 / 4) * (maxVelocity - baseVelocity);
+
+        case distanceProportion > 0.8:
+            return maxVelocity;
+
+        case distanceProportion > 0.5 || currentDistance > 100:
+            return baseVelocity + (1 / 2) * (maxVelocity - baseVelocity);
+
+        case distanceProportion > 0.2:
+            return baseVelocity + (1 / 4) * (maxVelocity - baseVelocity);
+    }
+
+    return baseVelocity;
 };

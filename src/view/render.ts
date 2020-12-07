@@ -19,10 +19,6 @@ const mainLayer = new Konva.Layer();
 export const renderTree = (tree: StateTree) => {
     mainLayer.removeChildren();
 
-    if (!tree) {
-        return;
-    }
-
     const objects: Shape[] = [];
 
     denormalize(tree, tree.circles).forEach((circle) =>
@@ -56,7 +52,7 @@ export const renderTree = (tree: StateTree) => {
                 angle: arc.angle,
                 rotation: arc.rotation,
                 stroke: 'black',
-                strokeWidth: 1
+                strokeWidth: 0.5
             })
         )
     );
@@ -67,10 +63,6 @@ export const renderTree = (tree: StateTree) => {
 };
 
 export const updateTree = (diff: StateTree) => {
-    if (!diff) {
-        return;
-    }
-
     const circle = denormalize(diff, diff.circles.circle);
 
     const player = mainLayer.findOne(

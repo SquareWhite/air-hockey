@@ -33,8 +33,6 @@ export const reducer: Reducer<StateTree, Action> = (
                 ...state.positions,
                 [circle.position.id]: newPosition,
                 [circle.previousPosition.id]: newPrevPosition
-                    ? newPrevPosition
-                    : state.positions[circle.previousPosition.id]
             },
             lastRenderDate: new Date()
         };

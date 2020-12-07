@@ -32,8 +32,8 @@ export const mouseMove$ = fromEvent<MouseEvent>(
             'wrapper'
         )[0] as HTMLElement;
         const container = document.getElementById('container')!;
-        const xCorrection = container.offsetLeft - wrapper.offsetLeft;
-        const yCorrection = container.offsetTop - wrapper.offsetTop;
+        const xCorrection = container.offsetLeft - wrapper.offsetLeft + 15;
+        const yCorrection = container.offsetTop - wrapper.offsetTop + 16;
         return {
             ...event,
             correctedX: event.pageX - xCorrection,
@@ -42,8 +42,10 @@ export const mouseMove$ = fromEvent<MouseEvent>(
     })
 );
 
-// from() doesn't work with redux store on the current versions
-// https://github.com/reduxjs/redux/issues/3586
+/*
+ from() doesn't work with redux store on the current versions
+ https://github.com/reduxjs/redux/issues/3586
+ */
 export const store$ = from<any>(store).pipe(
     map((value) => value as StateTree),
     share()
@@ -64,5 +66,5 @@ export const positionUpdates$ = store$.pipe(
 
 export const collisions$ = positionUpdates$.pipe(
     map(findCollisionsInState),
-    filter((value): value is Collision[] => !!(value && value.length))
+    filter((value): value is Collision[] => !!value?.length)
 );

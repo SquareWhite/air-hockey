@@ -74,7 +74,7 @@ const _substituteReferences = <T extends Entity>(
         if (typeof refId !== 'string') {
             return;
         }
-        (newEntity as Indexable)[key] = state[collection][refId];
+        (newEntity as Indexable)[key] = { ...state[collection][refId] };
     });
 
     return newEntity;
