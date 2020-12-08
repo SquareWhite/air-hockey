@@ -1,6 +1,5 @@
 import Konva from 'konva';
 import {
-    StateTree,
     FIELD_MARGIN,
     FIELD_WIDTH,
     FIELD_HEIGHT
@@ -8,6 +7,7 @@ import {
 import { Node } from 'konva/types/Node';
 import { denormalize } from '../model/denormalize';
 import { Shape } from 'konva/types/Shape';
+import { StateTree } from '../model/types';
 
 const stage = new Konva.Stage({
     container: 'container', // id of container <div>
@@ -52,7 +52,7 @@ export const renderTree = (tree: StateTree) => {
                 angle: arc.angle,
                 rotation: arc.rotation,
                 stroke: 'black',
-                strokeWidth: 0.5
+                strokeWidth: 1
             })
         )
     );
@@ -63,11 +63,14 @@ export const renderTree = (tree: StateTree) => {
 };
 
 export const updateTree = (diff: StateTree) => {
-    const circle = denormalize(diff, diff.circles.circle);
+    const circles = denormalize(diff, diff.circles);
 
-    const player = mainLayer.findOne(
-        (node: Node) => node.attrs.id === circle.id
-    );
-    player.absolutePosition(circle.position);
+    circles.forEach((circle) => {
+        const player = mainLayer.findOne(
+            (node: Node) => node.attrs.id === circle.id
+        );
+        player.absolutePosition(circle.position);
+    });
+
     mainLayer.draw();
 };

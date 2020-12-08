@@ -1,5 +1,5 @@
 import { Indexable } from '../helpers/types';
-import { StateTree } from './initial-state';
+import { StateTree } from './types';
 
 const REFERENCE_FIELDS = ['movement', 'position', 'previousPosition'] as const;
 type ReferenceField = typeof REFERENCE_FIELDS[number];

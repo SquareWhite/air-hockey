@@ -2,7 +2,8 @@ import { Reducer } from 'redux';
 
 import { MOVE_CIRCLE, MOVE_CIRCLE_ABSOLUTE } from './action-types';
 import { denormalize } from './denormalize';
-import { StateTree, initialState } from './initial-state';
+import { initialState } from './initial-state';
+import { StateTree } from './types';
 
 export interface Action {
     type: string;

@@ -2,9 +2,10 @@ import { fromEvent, merge, interval, from } from 'rxjs';
 import { distinctUntilChanged, share, filter, map } from 'rxjs/operators';
 
 import { store } from '../model/store';
-import { StateTree } from '../model/initial-state';
+import { StateTree } from '../model/types';
 import { KeyCode } from '../constants/keycodes';
-import { findCollisionsInState, Collision } from './game-logic/collisions';
+import { findCollisionsInState } from './game-logic/collisions/collisions';
+import { Collision } from './game-logic/collisions/types';
 
 export const gameClock$ = interval(15).pipe(share());
 
@@ -26,6 +27,25 @@ export const arrowLeft$ = keyEvents$.pipe(
 export const mouseMove$ = fromEvent<MouseEvent>(
     document.getElementsByClassName('wrapper')!,
     'mousemove'
+).pipe(
+    map((event) => {
+        const wrapper = document.getElementsByClassName(
+            'wrapper'
+        )[0] as HTMLElement;
+        const container = document.getElementById('container')!;
+        const xCorrection = container.offsetLeft - wrapper.offsetLeft + 15;
+        const yCorrection = container.offsetTop - wrapper.offsetTop + 16;
+        return {
+            ...event,
+            correctedX: event.pageX - xCorrection,
+            correctedY: event.pageY - yCorrection
+        };
+    })
+);
+
+export const mouseClick$ = fromEvent<MouseEvent>(
+    document.getElementsByClassName('wrapper')!,
+    'click'
 ).pipe(
     map((event) => {
         const wrapper = document.getElementsByClassName(

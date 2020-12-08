@@ -1,6 +1,6 @@
 import { gameClock$ } from '../game-observables';
 import { moveCircle } from '../../model/action-creators';
-import { Identifiable, Movable } from '../../model/initial-state';
+import { Identifiable, Movable } from '../../model/types';
 
 type MoveFunction = (
     direction: { x: number; y: number },
@@ -105,12 +105,14 @@ const _calculateVelocity = (
         case distanceProportion > 0.8:
             return maxVelocity;
 
-        case distanceProportion > 0.5 || currentDistance > 100:
+        case currentDistance > 100:
+        case distanceProportion > 0.5:
             return baseVelocity + (1 / 2) * (maxVelocity - baseVelocity);
 
         case distanceProportion > 0.2:
             return baseVelocity + (1 / 4) * (maxVelocity - baseVelocity);
-    }
 
-    return baseVelocity;
+        default:
+            return baseVelocity;
+    }
 };

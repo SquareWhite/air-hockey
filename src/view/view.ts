@@ -1,4 +1,4 @@
-import { StateTree } from '../model/initial-state';
+import { StateTree } from '../model/types';
 import { renderTree, updateTree } from './render';
 import { positionUpdates$, store$ } from '../controller/game-observables';
 import { store } from '../model/store';
