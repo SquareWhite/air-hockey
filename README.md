@@ -14,25 +14,35 @@
 
 ### Game features:
 
--   Make puck collide with walls
 -   Make puck bounce off the walls
--   Same for arcs
--   Make puck collide with player and move on impact
+-   Same for circles and arcs
+-   Make puck move, when it collides with player
 -   Add gates
 -   Add score
+
+### Bugs:
+
 -   Circle can jump through a little space between the other circle and a wall
     Also two moving circles may collide poorly (jump through each other).
     I think this could be fixed with checks for collisions in intermediate points.
+-   Try to fix all collision errors
+-   Add handlers for unfixable edge-case errors (e.g. restart the game instead of blowing up)
+-   Look into firefox performance issues
 
 ### Technical debt:
 
--   Should movements live in state tree?
 -   Fix markup
+-   Unify different direction representations
 -   TODOs
--   Refactor types: actions should be typed, move types to separate files (e.g. from initial-state.ts)
-    Also maybe collisions.ts shouldn't contain those type definitions
+-   Refactor types: actions should be typed
+-   Refactor actions, split the reducer
 -   Think about module architecture
 -   Unit & e2e tests
 -   Documentation
 -   Pretty readme
--   Look into firefox performance issues
+
+### Future ideas:
+
+-   Rewrite the view layer using pure canvas api
+-   Rewrite computationally expensive parts of the game
+    (e.g. math, collisions) in rust + web assembly

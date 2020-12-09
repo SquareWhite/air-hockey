@@ -28,6 +28,7 @@ export const findLineCollisions = (
     return collidingLines.length
         ? collidingLines.map((line) => ({
               type: 'LINE',
+              isElastic: circle.isElastic,
               circle,
               object: line
           }))
@@ -47,6 +48,7 @@ export const findLineCrossCollisions = (
     return collidingLines.length
         ? collidingLines.map((line) => ({
               type: 'LINE_CROSS',
+              isElastic: circle.isElastic,
               circle,
               object: line
           }))
@@ -58,18 +60,38 @@ export const resolveLineCollision = (
 ): IdentifiedPoint => {
     const { circle, object: line } = collision;
     const id = circle.position.id;
-
     const minDistance = circle.radius;
-    const pointOnALine = projectPointToLine(circle.position, line);
-    const outOfTheWall =
-        collision.type === 'LINE_CROSS'
-            ? getDirection(circle.position, pointOnALine)
-            : getDirection(pointOnALine, circle.position);
 
-    return {
-        ...movePointInDirection(pointOnALine, outOfTheWall, minDistance),
-        id
-    };
+    let newPosition: IdentifiedPoint;
+    if (!collision.isElastic) {
+        const pointOnALine = projectPointToLine(circle.position, line);
+        const outOfTheWall =
+            collision.type === 'LINE_CROSS'
+                ? getDirection(circle.position, pointOnALine)
+                : getDirection(pointOnALine, circle.position);
+
+        newPosition = {
+            ...movePointInDirection(pointOnALine, outOfTheWall, minDistance),
+            id
+        };
+    } else {
+        const distance = Math.max(
+            minDistance,
+            calculateDistanceToLine(circle.position, line)
+        );
+        const pointOnALine = projectPointToLine(circle.position, line);
+        const outOfTheWall =
+            collision.type === 'LINE_CROSS'
+                ? getDirection(circle.position, pointOnALine)
+                : getDirection(pointOnALine, circle.position);
+
+        newPosition = {
+            ...movePointInDirection(pointOnALine, outOfTheWall, distance),
+            id
+        };
+    }
+
+    return newPosition;
 };
 
 const _collidesWithLine = (
@@ -90,7 +112,7 @@ const _crossedTheLine = (circle: GameCircle, line: Line): boolean => {
     const newDirection = getDirection(circle.position, newVertical);
 
     return (
-        newDirection.xDirection !== prevDirection.xDirection ||
-        newDirection.yDirection !== prevDirection.yDirection
+        Math.sign(newDirection.x) !== Math.sign(prevDirection.x) ||
+        Math.sign(newDirection.y) !== Math.sign(prevDirection.y)
     );
 };

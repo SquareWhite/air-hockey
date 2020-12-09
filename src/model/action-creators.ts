@@ -1,4 +1,9 @@
-import { MOVE_CIRCLE, MOVE_CIRCLE_ABSOLUTE } from './action-types';
+import {
+    CHANGE_MOVEMENT_DIRECTION,
+    CHANGE_MOVEMENT_VELOCITY,
+    MOVE_CIRCLE,
+    MOVE_CIRCLE_ABSOLUTE
+} from './action-types';
 import { store } from './store';
 
 export const moveCircle = (circleId: string, stepX: number, stepY: number) =>
@@ -20,5 +25,20 @@ export const moveCircleAbsolute = (
             x,
             y,
             shouldSetPrev
+        }
+    });
+
+export const changeMovementDirection = (id: string, x: number, y: number) =>
+    store.dispatch({
+        type: CHANGE_MOVEMENT_DIRECTION,
+        payload: { id, x, y }
+    });
+
+export const changeMovementVelocity = (id: string, velocity: number) =>
+    store.dispatch({
+        type: CHANGE_MOVEMENT_VELOCITY,
+        payload: {
+            id,
+            velocity
         }
     });

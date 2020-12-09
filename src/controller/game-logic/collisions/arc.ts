@@ -29,6 +29,7 @@ export const findArcCollisions = (
     return collidingArcs.length
         ? collidingArcs.map((arc) => ({
               type: 'ARC',
+              isElastic: circle.isElastic,
               circle,
               object: arc
           }))

@@ -23,7 +23,8 @@ import {
 
 export const findCollisionsInState = (state: StateTree): Collision[] => {
     const circle: GameCircle = denormalize(state, state.circles.circle);
-    const otherCircle: IdentifiedCircle = denormalize(
+    const puck: GameCircle = denormalize(state, state.circles.puck);
+    const otherCircle: GameCircle = denormalize(
         state,
         state.circles.otherCircle
     );
@@ -40,7 +41,10 @@ export const findCollisionsInState = (state: StateTree): Collision[] => {
     );
     const arcs: IdentifiedArc[] = denormalize(state, state.arcs);
 
-    return _findCollisions(circle, [otherCircle, ...lines, ...arcs]);
+    return [
+        ..._findCollisions(circle, [puck, otherCircle, ...lines, ...arcs]),
+        ..._findCollisions(puck, [otherCircle, ...lines, ...arcs])
+    ];
 };
 
 export const resolveCollisions = (collisions: Collision[]): void => {
@@ -83,22 +87,25 @@ const _findCollisions = (
     circle: GameCircle,
     objects: (IdentifiedLine | IdentifiedCircle | IdentifiedArc)[]
 ): Collision[] => {
-    let otherCircle: IdentifiedCircle | null = null;
+    const otherCircles: IdentifiedCircle[] = [];
     const lines: IdentifiedLine[] = [];
     const arcs: IdentifiedArc[] = [];
+
     objects.forEach((obj) => {
         if ('angle' in obj) {
             arcs.push(obj);
         } else if ('radius' in obj) {
-            otherCircle = obj;
+            otherCircles.push(obj);
         } else {
             lines.push(obj);
         }
     });
 
     const result: Collision[][] = [
-        otherCircle ? findCircleCollisions(circle, otherCircle) : [],
-        otherCircle ? findCircleCrossCollisions(circle, otherCircle) : [],
+        otherCircles.length ? findCircleCollisions(circle, otherCircles) : [],
+        otherCircles.length
+            ? findCircleCrossCollisions(circle, otherCircles)
+            : [],
         lines.length ? findLineCollisions(circle, lines) : [],
         lines.length ? findLineCrossCollisions(circle, lines) : [],
         arcs.length ? findArcCollisions(circle, arcs) : []

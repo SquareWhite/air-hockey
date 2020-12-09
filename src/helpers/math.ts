@@ -15,10 +15,12 @@ export interface Arc extends Circle {
     rotation: number;
 }
 export interface Direction {
-    deltaX: number;
-    deltaY: number;
-    xDirection: number;
-    yDirection: number;
+    x: number;
+    y: number;
+    // deltaX: number;
+    // deltaY: number;
+    // xDirection: number;
+    // yDirection: number;
 }
 
 export const EPSILON = 0.1;
@@ -77,19 +79,23 @@ export const movePointInDirection = (
     direction: Direction,
     distance: number
 ): Point => {
-    const { deltaX, deltaY, xDirection, yDirection } = direction;
+    if (distance < 0) {
+        throw new Error("Distance can't be negative!");
+    }
+
+    const { x, y } = direction;
     let { x: newX, y: newY } = point;
 
-    if (Math.abs(deltaX) < EPSILON) {
-        newY = newY + yDirection * distance;
-    } else if (Math.abs(deltaY) < EPSILON) {
-        newX = newX + xDirection * distance;
+    if (Math.abs(x) < 10e-6) {
+        newY = newY + y * distance;
+    } else if (Math.abs(y) < 10e-6) {
+        newX = newX + x * distance;
     } else {
-        const tg = deltaY / deltaX;
+        const tg = y / x;
         const xStep = distance / Math.sqrt(tg ** 2 + 1);
         const yStep = distance / Math.sqrt(tg ** -2 + 1);
-        newX = newX + xDirection * xStep;
-        newY = newY + yDirection * yStep;
+        newX = newX + Math.sign(x) * xStep;
+        newY = newY + Math.sign(y) * yStep;
     }
 
     return {
@@ -103,52 +109,58 @@ type GetDirection = {
     (angle: number): Direction;
 };
 export const getDirection: GetDirection = (from: any, to?: any) => {
-    let xDirection;
-    let yDirection;
-    let deltaX;
-    let deltaY;
+    let direction: Direction;
 
     if (from && to) {
-        deltaX = to.x - from.x;
-        deltaY = to.y - from.y;
-        xDirection = deltaX / Math.abs(deltaX) || 0;
-        yDirection = deltaY / Math.abs(deltaY) || 0;
-    } else {
+        const distance = calculateDistance(from, to);
+        const deltaX = to.x - from.x;
+        const deltaY = to.y - from.y;
+        const sqCosine = (deltaX / distance) ** 2;
+        const sqSine = (deltaY / distance) ** 2;
+        direction = {
+            x: Math.sign(deltaX) * sqCosine,
+            y: Math.sign(deltaY) * sqSine
+        };
+    } else if (typeof from === 'number') {
         const angle = from % 360;
-        deltaX = Math.cos((angle / 180) * Math.PI) ** 2;
-        deltaY = Math.sin((angle / 180) * Math.PI) ** 2;
+        const sqCosine = Math.cos((angle / 180) * Math.PI) ** 2;
+        const sqSine = Math.sin((angle / 180) * Math.PI) ** 2;
 
         const quartal = Math.floor(angle / 90);
+        let signX;
+        let signY;
         switch (quartal) {
             case 0:
-                xDirection = 1;
-                yDirection = 1;
+                signX = 1;
+                signY = 1;
                 break;
             case -3:
             case 1:
-                xDirection = -1;
-                yDirection = 1;
+                signX = -1;
+                signY = 1;
                 break;
             case 2:
             case -2:
-                xDirection = -1;
-                yDirection = -1;
+                signX = -1;
+                signY = -1;
                 break;
             case 3:
             case -1:
-                xDirection = 1;
-                yDirection = -1;
+                signX = 1;
+                signY = -1;
                 break;
             default:
                 throw new Error(`Unrecognized quartal: ${quartal}`);
         }
+        direction = {
+            x: signX * sqCosine,
+            y: signY * sqSine
+        };
+    } else {
+        throw new Error('Wrong arguments passed into getDirection()!');
     }
-    return {
-        deltaX,
-        deltaY,
-        xDirection,
-        yDirection
-    };
+
+    return direction;
 };
 
 export const getArcBeginningAndEnd = (arc: Arc): [Point, Point] => {

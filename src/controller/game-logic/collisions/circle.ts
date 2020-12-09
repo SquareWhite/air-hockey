@@ -16,55 +16,45 @@ import {
 
 export const findCircleCollisions = (
     circle: GameCircle,
-    otherCircle: IdentifiedCircle
+    otherCircles: IdentifiedCircle[]
 ): Collision[] => {
-    const minDistance = circle.radius + otherCircle.radius;
-    const distance = calculateDistance(circle.position, otherCircle.position);
+    const collidingCircles: IdentifiedCircle[] = [];
 
-    return distance < minDistance - EPSILON
-        ? [
-              {
-                  type: 'CIRCLE',
-                  circle,
-                  object: otherCircle
-              }
-          ]
+    otherCircles.forEach((otherCircle) => {
+        if (_collidesWithCircle(circle, otherCircle)) {
+            collidingCircles.push(otherCircle);
+        }
+    });
+
+    return collidingCircles.length
+        ? collidingCircles.map((otherCircle) => ({
+              type: 'CIRCLE',
+              isElastic: circle.isElastic,
+              circle,
+              object: otherCircle
+          }))
         : [];
 };
 
 export const findCircleCrossCollisions = (
     circle: GameCircle,
-    otherCircle: IdentifiedCircle
+    otherCircles: IdentifiedCircle[]
 ): Collision[] => {
-    const prevPosition: Point = circle.previousPosition;
+    const collidingCircles: IdentifiedCircle[] = [];
 
-    const intersection = projectPointToLine(otherCircle.position, {
-        point1: prevPosition,
-        point2: circle.position
+    otherCircles.forEach((otherCircle) => {
+        if (_crossedTheCircle(circle, otherCircle)) {
+            collidingCircles.push(otherCircle);
+        }
     });
 
-    const intersectionIsOutside =
-        calculateDistance(otherCircle.position, intersection) >
-        otherCircle.radius;
-
-    if (intersectionIsOutside) {
-        return [];
-    }
-
-    const prevDirection = getDirection(prevPosition, intersection);
-    const newDirection = getDirection(circle.position, intersection);
-    const collisionOccured =
-        newDirection.xDirection !== prevDirection.xDirection ||
-        newDirection.yDirection !== prevDirection.yDirection;
-
-    return collisionOccured
-        ? [
-              {
-                  type: 'CIRCLE_CROSS',
-                  circle,
-                  object: otherCircle
-              }
-          ]
+    return collidingCircles.length
+        ? collidingCircles.map((otherCircle) => ({
+              type: 'CIRCLE_CROSS',
+              isElastic: circle.isElastic,
+              circle,
+              object: otherCircle
+          }))
         : [];
 };
 
@@ -119,4 +109,42 @@ export const resolveCircleCollision = (
     }
 
     return { ...newPosition, id };
+};
+
+const _collidesWithCircle = (
+    circle: GameCircle,
+    otherCircle: IdentifiedCircle
+): boolean => {
+    const minDistance = circle.radius + otherCircle.radius;
+    const distance = calculateDistance(circle.position, otherCircle.position);
+
+    return distance < minDistance - EPSILON;
+};
+
+const _crossedTheCircle = (
+    circle: GameCircle,
+    otherCircle: IdentifiedCircle
+): boolean => {
+    const prevPosition: Point = circle.previousPosition;
+
+    const intersection = projectPointToLine(otherCircle.position, {
+        point1: prevPosition,
+        point2: circle.position
+    });
+
+    const intersectionIsOutside =
+        calculateDistance(otherCircle.position, intersection) >
+        otherCircle.radius;
+
+    if (intersectionIsOutside) {
+        return false;
+    }
+
+    const prevDirection = getDirection(prevPosition, intersection);
+    const newDirection = getDirection(circle.position, intersection);
+    const collisionOccured =
+        Math.sign(newDirection.x) !== Math.sign(prevDirection.x) ||
+        Math.sign(newDirection.y) !== Math.sign(prevDirection.y);
+
+    return collisionOccured;
 };

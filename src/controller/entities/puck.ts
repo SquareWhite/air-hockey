@@ -1,7 +1,7 @@
 import { mouseClick$ } from '../game-observables';
 import { createMoveFunction } from '../game-logic/movement';
 import { store } from '../../model/store';
-import { calculateDistance } from '../../helpers/math';
+import { calculateDistance, getDirection } from '../../helpers/math';
 import { denormalize } from '../../model/denormalize';
 import { GameCircle } from '../../model/types';
 
@@ -23,21 +23,10 @@ mouseClick$.subscribe((event) => {
         y: event.correctedY
     });
 
-    let directionVector;
-    if (distance < puck.radius / 4) {
-        directionVector = { x: 0, y: 0 };
-    } else {
-        const deltaX = puck.position.x - event.correctedX;
-        const deltaY = puck.position.y - event.correctedY;
-        const sqSine = (deltaY / distance) ** 2;
-        const sqCosine = (deltaX / distance) ** 2;
-        const xDirection = -deltaX / Math.abs(deltaX);
-        const yDirection = -deltaY / Math.abs(deltaY);
-        directionVector = {
-            x: xDirection * sqCosine,
-            y: yDirection * sqSine
-        };
-    }
+    const directionVector = getDirection(puck.position, {
+        x: event.correctedX,
+        y: event.correctedY
+    });
 
     _pushPuck(directionVector, distance);
 });

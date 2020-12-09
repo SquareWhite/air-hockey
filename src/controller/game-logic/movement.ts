@@ -1,6 +1,10 @@
-import { gameClock$ } from '../game-observables';
-import { moveCircle } from '../../model/action-creators';
-import { Identifiable, Movable } from '../../model/types';
+import { gameClock$, store$ } from '../game-observables';
+import {
+    changeMovementDirection,
+    changeMovementVelocity,
+    moveCircle
+} from '../../model/action-creators';
+import { Identifiable, Movable, StateTree } from '../../model/types';
 
 type MoveFunction = (
     direction: { x: number; y: number },
@@ -26,7 +30,14 @@ export const createMoveFunction: CreateMoveFunction = ({
         throw new Error('parameter entity is required!');
     }
 
-    const { id, movement } = entity;
+    const { id } = entity;
+    let movement = entity.movement;
+
+    store$.subscribe((state: StateTree) => {
+        if (movement !== state.movements[movement.id]) {
+            movement = state.movements[movement.id];
+        }
+    });
 
     let stopMovingFn: (() => void) | null;
     let isMoving = false;
@@ -34,7 +45,7 @@ export const createMoveFunction: CreateMoveFunction = ({
     let currentDistance = 0;
 
     return (direction, distance) => {
-        movement.directionVector = direction;
+        changeMovementDirection(movement.id, direction.x, direction.y);
         distanceToTarget = distance;
         currentDistance = distanceToTarget;
 
@@ -48,12 +59,13 @@ export const createMoveFunction: CreateMoveFunction = ({
                     stopMovingFn && stopMovingFn();
                     stopMovingFn = null;
                 } else {
-                    movement.velocity = _calculateVelocity(
+                    const newVelocity = _calculateVelocity(
                         currentDistance,
                         distanceToTarget,
                         baseVelocity,
                         maxVelocity
                     );
+                    changeMovementVelocity(movement.id, newVelocity);
                 }
             });
 
@@ -72,7 +84,7 @@ export const createMoveFunction: CreateMoveFunction = ({
             stopMovingFn = () => {
                 accelerationSubscription.unsubscribe();
                 movementSubscription.unsubscribe();
-                movement.velocity = baseVelocity;
+                changeMovementVelocity(movement.id, baseVelocity);
                 isMoving = false;
             };
             isMoving = true;

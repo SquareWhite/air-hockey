@@ -8,18 +8,21 @@ export type IdentifiedArc = Arc & { id: string };
 
 export type LineCollision = {
     type: 'LINE' | 'LINE_CROSS';
+    isElastic: boolean;
     circle: GameCircle;
     object: IdentifiedLine;
 };
 
 export type CircleCollision = {
     type: 'CIRCLE' | 'CIRCLE_CROSS';
+    isElastic: boolean;
     circle: GameCircle;
     object: IdentifiedCircle;
 };
 
 export type ArcCollision = {
     type: 'ARC';
+    isElastic: boolean;
     circle: GameCircle;
     object: IdentifiedArc;
 };

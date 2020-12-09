@@ -26,6 +26,7 @@ export type GameCircle = {
         y: number;
     };
     radius: number;
+    isElastic: boolean;
 } & Movable;
 
 export type StateTree = {
@@ -68,6 +69,7 @@ export type StateTree = {
             previousPosition: string;
             movement: string;
             radius: number;
+            isElastic: boolean;
         };
     };
     lastRenderDate: Date;

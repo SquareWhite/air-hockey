@@ -1,6 +1,11 @@
 import { Reducer } from 'redux';
 
-import { MOVE_CIRCLE, MOVE_CIRCLE_ABSOLUTE } from './action-types';
+import {
+    CHANGE_MOVEMENT_DIRECTION,
+    CHANGE_MOVEMENT_VELOCITY,
+    MOVE_CIRCLE,
+    MOVE_CIRCLE_ABSOLUTE
+} from './action-types';
 import { denormalize } from './denormalize';
 import { initialState } from './initial-state';
 import { StateTree } from './types';
@@ -67,6 +72,41 @@ export const reducer: Reducer<StateTree, Action> = (
                     : state.positions[circle.previousPosition.id]
             },
             lastRenderDate: new Date()
+        };
+    }
+
+    if (action.type === CHANGE_MOVEMENT_DIRECTION) {
+        const { id, x, y } = action.payload;
+        const movement = state.movements[id];
+
+        return {
+            ...state,
+            movements: {
+                ...state.movements,
+                [id]: {
+                    ...movement,
+                    directionVector: {
+                        x,
+                        y
+                    }
+                }
+            }
+        };
+    }
+
+    if (action.type === CHANGE_MOVEMENT_VELOCITY) {
+        const { id, velocity } = action.payload;
+        const movement = state.movements[id];
+
+        return {
+            ...state,
+            movements: {
+                ...state.movements,
+                [id]: {
+                    ...movement,
+                    velocity
+                }
+            }
         };
     }
 

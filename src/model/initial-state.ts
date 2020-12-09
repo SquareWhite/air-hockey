@@ -160,21 +160,24 @@ export const initialState: StateTree = {
             position: 'circlePos',
             previousPosition: 'circlePrevPos',
             movement: 'circleMovement',
-            radius: 30
+            radius: 30,
+            isElastic: false
         },
         otherCircle: {
             id: 'otherCircle',
             position: 'otherCirclePos',
             previousPosition: 'otherCirclePrevPos',
             movement: 'otherCircleMovement',
-            radius: 30
+            radius: 30,
+            isElastic: false
         },
         puck: {
             id: 'puck',
             position: 'puckPos',
             previousPosition: 'puckPrevPos',
             movement: 'puckMovement',
-            radius: 15
+            radius: 15,
+            isElastic: true
         }
     },
     lastRenderDate: new Date()
