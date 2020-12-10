@@ -1,6 +1,8 @@
 import {
     movePointInDirection,
+    moveLineInDirection,
     Point,
+    Line,
     Direction,
     getDirection,
     intersectTwoLines
@@ -29,6 +31,28 @@ describe('math', () => {
         expect(() =>
             movePointInDirection(centerPoint, { x: -1, y: 0 }, -10)
         ).toThrow();
+    });
+
+    it('moveLineInDirection', () => {
+        const line: Line = {
+            point1: { x: 0, y: 0 },
+            point2: { x: 10, y: 0 }
+        };
+        let direction: Direction = { x: 1, y: 0 };
+        const distance = 10;
+
+        let result = moveLineInDirection(line, direction, distance);
+        expect(result).toEqual({
+            point1: { x: 10, y: 0 },
+            point2: { x: 20, y: 0 }
+        });
+
+        direction = { x: 0, y: 1 };
+        result = moveLineInDirection(line, direction, distance);
+        expect(result).toEqual({
+            point1: { x: 0, y: 10 },
+            point2: { x: 10, y: 10 }
+        });
     });
 
     it('getDirection(point1, point2)', () => {

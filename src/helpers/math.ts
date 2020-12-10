@@ -150,6 +150,25 @@ export const movePointInDirection = (
     };
 };
 
+export const moveLineInDirection = (
+    line: Line,
+    direction: Direction,
+    distance: number
+): Line => {
+    const deltaX = direction.x * distance;
+    const deltaY = direction.y * distance;
+    return {
+        point1: {
+            x: line.point1.x + deltaX,
+            y: line.point1.y + deltaY
+        },
+        point2: {
+            x: line.point2.x + deltaX,
+            y: line.point2.y + deltaY
+        }
+    };
+};
+
 type GetDirection = {
     (from: Point, to: Point): Direction;
     (angle: number): Direction;
