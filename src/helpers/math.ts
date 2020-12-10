@@ -161,16 +161,16 @@ export const getDirection: GetDirection = (from: any, to?: any) => {
         const distance = calculateDistance(from, to);
         const deltaX = to.x - from.x;
         const deltaY = to.y - from.y;
-        const sqCosine = (deltaX / distance) ** 2;
-        const sqSine = (deltaY / distance) ** 2;
+        const cosine = Math.abs(deltaX / distance);
+        const sine = Math.abs(deltaY / distance);
         direction = {
-            x: Math.sign(deltaX) * sqCosine,
-            y: Math.sign(deltaY) * sqSine
+            x: Math.sign(deltaX) * cosine,
+            y: Math.sign(deltaY) * sine
         };
     } else if (typeof from === 'number') {
         const angle = from % 360;
-        const sqCosine = Math.cos((angle / 180) * Math.PI) ** 2;
-        const sqSine = Math.sin((angle / 180) * Math.PI) ** 2;
+        const cosine = Math.abs(Math.cos((angle / 180) * Math.PI));
+        const sine = Math.abs(Math.sin((angle / 180) * Math.PI));
 
         const quartal = Math.floor(angle / 90);
         let signX;
@@ -199,8 +199,8 @@ export const getDirection: GetDirection = (from: any, to?: any) => {
                 throw new Error(`Unrecognized quartal: ${quartal}`);
         }
         direction = {
-            x: signX * sqCosine,
-            y: signY * sqSine
+            x: signX * cosine,
+            y: signY * sine
         };
     } else {
         throw new Error('Wrong arguments passed into getDirection()!');

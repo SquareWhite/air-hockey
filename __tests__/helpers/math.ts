@@ -39,26 +39,30 @@ describe('math', () => {
         expect(Math.sign(result.x)).toEqual(1);
         expect(Math.abs(result.x) - 1).toBeLessThan(10e-6);
         expect(Math.abs(result.y)).toBeLessThan(10e-6);
+        expect(Math.abs(result.x ** 2 + result.y ** 2 - 1)).toBeLessThan(10e-6);
 
         point = { x: 0, y: 10 };
         result = getDirection(centerPoint, point);
         expect(Math.sign(result.y)).toEqual(1);
         expect(Math.abs(result.x)).toBeLessThan(10e-6);
         expect(Math.abs(result.y) - 1).toBeLessThan(10e-6);
+        expect(Math.abs(result.x ** 2 + result.y ** 2 - 1)).toBeLessThan(10e-6);
 
         point = { x: 10, y: 10 };
         result = getDirection(centerPoint, point);
         expect(Math.sign(result.x)).toEqual(1);
         expect(Math.sign(result.y)).toEqual(1);
-        expect(Math.abs(result.x) - 0.5).toBeLessThan(10e-6);
-        expect(Math.abs(result.y) - 0.5).toBeLessThan(10e-6);
+        expect(Math.abs(result.x) - Math.sqrt(0.5)).toBeLessThan(10e-6);
+        expect(Math.abs(result.y) - Math.sqrt(0.5)).toBeLessThan(10e-6);
+        expect(Math.abs(result.x ** 2 + result.y ** 2 - 1)).toBeLessThan(10e-6);
 
         point = { x: 10, y: -10 };
         result = getDirection(centerPoint, point);
         expect(Math.sign(result.x)).toEqual(1);
         expect(Math.sign(result.y)).toEqual(-1);
-        expect(Math.abs(result.x) - 0.5).toBeLessThan(10e-6);
-        expect(Math.abs(result.y) - 0.5).toBeLessThan(10e-6);
+        expect(Math.abs(result.x) - Math.sqrt(0.5)).toBeLessThan(10e-6);
+        expect(Math.abs(result.y) - Math.sqrt(0.5)).toBeLessThan(10e-6);
+        expect(Math.abs(result.x ** 2 + result.y ** 2 - 1)).toBeLessThan(10e-6);
     });
 
     it('getDirection(angle)', () => {
@@ -72,13 +76,15 @@ describe('math', () => {
         expect(Math.sign(result.y)).toEqual(1);
         expect(Math.abs(result.x)).toBeLessThan(10e-6);
         expect(Math.abs(result.y) - 1).toBeLessThan(10e-6);
+        expect(Math.abs(result.x ** 2 + result.y ** 2 - 1)).toBeLessThan(10e-6);
 
         angle = 180 + 45;
         result = getDirection(angle);
         expect(Math.sign(result.x)).toEqual(-1);
         expect(Math.sign(result.y)).toEqual(-1);
-        expect(Math.abs(result.x) - 0.5).toBeLessThan(10e-6);
-        expect(Math.abs(result.y) - 0.5).toBeLessThan(10e-6);
+        expect(Math.abs(result.x) - Math.sqrt(0.5)).toBeLessThan(10e-6);
+        expect(Math.abs(result.y) - Math.sqrt(0.5)).toBeLessThan(10e-6);
+        expect(Math.abs(result.x ** 2 + result.y ** 2 - 1)).toBeLessThan(10e-6);
 
         expect(() => getDirection(null as any)).toThrow();
     });
