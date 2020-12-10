@@ -4,7 +4,8 @@ import {
     Point,
     projectPointToLine,
     getDirection,
-    movePointInDirection
+    movePointInDirection,
+    Direction
 } from '../../../helpers/math';
 import { GameCircle } from '../../../model/types';
 import {
@@ -60,8 +61,9 @@ export const findCircleCrossCollisions = (
 
 export const resolveCircleCollision = (
     collision: CircleCollision
-): IdentifiedPoint => {
+): [IdentifiedPoint, Direction] => {
     const { circle, object: otherCircle } = collision;
+    const newDirection = circle.movement.directionVector;
     const id = circle.position.id;
 
     const outOfTheCircle = getDirection(otherCircle.position, circle.position);
@@ -108,7 +110,7 @@ export const resolveCircleCollision = (
         );
     }
 
-    return { ...newPosition, id };
+    return [{ ...newPosition, id }, newDirection];
 };
 
 const _collidesWithCircle = (

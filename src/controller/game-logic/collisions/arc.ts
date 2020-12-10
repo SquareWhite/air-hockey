@@ -5,7 +5,8 @@ import {
     EPSILON,
     getDirection,
     Point,
-    movePointInDirection
+    movePointInDirection,
+    Direction
 } from '../../../helpers/math';
 import { GameCircle } from '../../../model/types';
 import {
@@ -38,8 +39,9 @@ export const findArcCollisions = (
 
 export const resolveArcCollision = (
     collision: ArcCollision
-): IdentifiedPoint => {
+): [IdentifiedPoint, Direction] => {
     const { circle, object: arc } = collision;
+    const newDirection = circle.movement.directionVector;
     const id = circle.position.id;
 
     const toTheArcsCenter = getDirection(circle.position, arc.position);
@@ -53,7 +55,7 @@ export const resolveArcCollision = (
         currentDistance - minDistance + EPSILON
     );
 
-    return { ...newPosition, id };
+    return [{ ...newPosition, id }, newDirection];
 };
 
 const _collidesWithArc = (circle: GameCircle, arc: IdentifiedArc): boolean => {

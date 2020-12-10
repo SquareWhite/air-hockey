@@ -14,13 +14,13 @@ export interface Arc extends Circle {
     angle: number;
     rotation: number;
 }
+/**
+ * Vector with a length of 1, that
+ * starts in the center of coordinates
+ */
 export interface Direction {
     x: number;
     y: number;
-    // deltaX: number;
-    // deltaY: number;
-    // xDirection: number;
-    // yDirection: number;
 }
 
 export const EPSILON = 0.1;
@@ -72,6 +72,52 @@ export const projectPointToLine = (point: Point, line: Line): Point => {
         };
     }
     return interception;
+};
+
+export const intersectTwoLines = (line1: Line, line2: Line): Point | null => {
+    const deltaXLine1 = line1.point1.x - line1.point2.x;
+    const deltaYLine1 = line1.point1.y - line1.point2.y;
+    const deltaXLine2 = line2.point1.x - line2.point2.x;
+    const deltaYLine2 = line2.point1.y - line2.point2.y;
+
+    // 1 - find k, b of line1
+    const kLine1 = deltaYLine1 / deltaXLine1;
+    const bLine1 = line1.point1.y - kLine1 * line1.point1.x;
+    // 2 - find k, b of line2
+    const kLine2 = deltaYLine2 / deltaXLine2;
+    const bLine2 = line2.point1.y - kLine2 * line2.point1.x;
+
+    const interception: Partial<Point> = {};
+    if (Math.abs(deltaXLine1) < 10e-6) {
+        // vertical line1
+        interception.x = line1.point1.x;
+        interception.y = kLine2 * interception.x + bLine2;
+    } else if (Math.abs(deltaYLine1) < 10e-6) {
+        // horizaontal line1
+        interception.y = line1.point1.y;
+        interception.x = (interception.y - bLine2) / kLine2;
+    }
+    if (Math.abs(deltaXLine2) < 10e-6) {
+        // vertical line2
+        interception.x = line2.point1.x;
+        interception.y = kLine1 * interception.x + bLine1;
+    } else if (Math.abs(deltaYLine2) < 10e-6) {
+        // horizaontal line2
+        interception.y = line2.point1.y;
+        interception.x = (interception.y - bLine1) / kLine1;
+    }
+
+    if (!('x' in interception)) {
+        interception.x = (bLine2 - bLine1) / (kLine1 - kLine2);
+        interception.y = kLine1 * interception.x + bLine1;
+    }
+
+    // 3 - find the interception point
+    if (Number.isNaN(interception.x) || Number.isNaN(interception.y)) {
+        return null;
+    }
+
+    return interception as Point;
 };
 
 export const movePointInDirection = (

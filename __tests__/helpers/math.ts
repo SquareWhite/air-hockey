@@ -2,7 +2,8 @@ import {
     movePointInDirection,
     Point,
     Direction,
-    getDirection
+    getDirection,
+    intersectTwoLines
 } from '../../src/helpers/math';
 
 describe('math', () => {
@@ -80,5 +81,35 @@ describe('math', () => {
         expect(Math.abs(result.y) - 0.5).toBeLessThan(10e-6);
 
         expect(() => getDirection(null as any)).toThrow();
+    });
+
+    it('intersectTwoLines(line, line)', () => {
+        let line1 = {
+            point1: { x: 0, y: 0 },
+            point2: { x: 100, y: 0 }
+        };
+        let line2 = {
+            point1: { x: 50, y: 50 },
+            point2: { x: 50, y: 0 }
+        };
+
+        let result = intersectTwoLines(line1, line2);
+        expect(result).toEqual({ x: 50, y: 0 });
+
+        line2 = {
+            point1: { x: 50, y: 50 },
+            point2: { x: 0, y: 0 }
+        };
+
+        result = intersectTwoLines(line1, line2);
+        expect(result).toEqual({ x: 0, y: 0 });
+
+        line1 = {
+            point1: { x: 0, y: 50 },
+            point2: { x: 50, y: 0 }
+        };
+
+        result = intersectTwoLines(line1, line2);
+        expect(result).toEqual({ x: 25, y: 25 });
     });
 });

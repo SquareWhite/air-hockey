@@ -1,6 +1,9 @@
 import { StateTree, GameCircle } from '../../../model/types';
-import { moveCircleAbsolute } from '../../../model/action-creators';
-import { Point } from '../../../helpers/math';
+import {
+    changeMovementDirection,
+    moveCircleAbsolute
+} from '../../../model/action-creators';
+import { Direction, Point } from '../../../helpers/math';
 import { denormalize } from '../../../model/denormalize';
 import {
     Collision,
@@ -42,7 +45,7 @@ export const findCollisionsInState = (state: StateTree): Collision[] => {
     const arcs: IdentifiedArc[] = denormalize(state, state.arcs);
 
     return [
-        ..._findCollisions(circle, [puck, otherCircle, ...lines, ...arcs]),
+        // ..._findCollisions(circle, [puck, otherCircle, ...lines, ...arcs]),
         ..._findCollisions(puck, [otherCircle, ...lines, ...arcs])
     ];
 };
@@ -53,21 +56,22 @@ export const resolveCollisions = (collisions: Collision[]): void => {
     }
 
     let newPosition: Point | null = null;
+    let newDirection: Direction | null = null;
     if (collisions.length > 1) {
-        newPosition = _resolveMultiObjectCollision(collisions);
+        [newPosition, newDirection] = _resolveMultiObjectCollision(collisions);
     } else {
         const collision = collisions[0];
         switch (collision.type) {
             case 'CIRCLE':
             case 'CIRCLE_CROSS':
-                newPosition = resolveCircleCollision(collision);
+                [newPosition, newDirection] = resolveCircleCollision(collision);
                 break;
             case 'LINE':
             case 'LINE_CROSS':
-                newPosition = resolveLineCollision(collision);
+                [newPosition, newDirection] = resolveLineCollision(collision);
                 break;
             case 'ARC':
-                newPosition = resolveArcCollision(collision);
+                [newPosition, newDirection] = resolveArcCollision(collision);
                 break;
         }
     }
@@ -80,6 +84,12 @@ export const resolveCollisions = (collisions: Collision[]): void => {
             newPosition.x,
             newPosition.y,
             false
+        );
+    newDirection &&
+        changeMovementDirection(
+            collisions[0].circle.movement.id,
+            newDirection.x,
+            newDirection.y
         );
 };
 
@@ -133,30 +143,32 @@ const _findCollisions = (
 
 const _resolveMultiObjectCollision = (
     collisions: Collision[]
-): IdentifiedPoint => {
+): [IdentifiedPoint, Direction] => {
     const objects = collisions.map((coll) => coll.object);
     const circle = collisions[0].circle;
 
     const prevPosition = circle.previousPosition;
+    const prevDirection = circle.movement.directionVector;
     let newPosition = circle.position;
+    let newDirection = circle.movement.directionVector;
     for (const collision of collisions) {
         switch (collision.type) {
             case 'CIRCLE':
             case 'CIRCLE_CROSS':
-                newPosition = resolveCircleCollision({
+                [newPosition, newDirection] = resolveCircleCollision({
                     ...collision,
                     circle: { ...circle, position: newPosition }
                 });
                 break;
             case 'LINE':
             case 'LINE_CROSS':
-                newPosition = resolveLineCollision({
+                [newPosition, newDirection] = resolveLineCollision({
                     ...collision,
                     circle: { ...circle, position: newPosition }
                 });
                 break;
             case 'ARC':
-                newPosition = resolveArcCollision({
+                [newPosition, newDirection] = resolveArcCollision({
                     ...collision,
                     circle: { ...circle, position: newPosition }
                 });
@@ -170,9 +182,9 @@ const _resolveMultiObjectCollision = (
             objects
         );
         if (foundCollisions.length === 0) {
-            return newPosition;
+            return [newPosition, newDirection];
         }
     }
 
-    return prevPosition;
+    return [prevPosition, prevDirection];
 };

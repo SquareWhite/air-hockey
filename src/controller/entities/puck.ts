@@ -9,7 +9,7 @@ const _pushPuck = ((state) => {
     const puck: GameCircle = denormalize(state, state.circles.puck);
     return createMoveFunction({
         baseVelocity: 4,
-        maxVelocity: 20,
+        maxVelocity: 10,
         entity: puck
     });
 })(store.getState());

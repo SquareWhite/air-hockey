@@ -14,7 +14,6 @@
 
 ### Game features:
 
--   Make puck bounce off the walls
 -   Same for circles and arcs
 -   Make puck move, when it collides with player
 -   Add gates
@@ -32,7 +31,6 @@
 ### Technical debt:
 
 -   Fix markup
--   Unify different direction representations
 -   TODOs
 -   Refactor types: actions should be typed
 -   Refactor actions, split the reducer

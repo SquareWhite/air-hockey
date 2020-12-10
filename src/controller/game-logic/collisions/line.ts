@@ -4,7 +4,11 @@ import {
     Point,
     projectPointToLine,
     getDirection,
-    movePointInDirection
+    movePointInDirection,
+    Direction,
+    intersectTwoLines,
+    measureAngle,
+    calculateDistance
 } from '../../../helpers/math';
 import { GameCircle } from '../../../model/types';
 import {
@@ -57,12 +61,13 @@ export const findLineCrossCollisions = (
 
 export const resolveLineCollision = (
     collision: LineCollision
-): IdentifiedPoint => {
+): [IdentifiedPoint, Direction] => {
     const { circle, object: line } = collision;
     const id = circle.position.id;
     const minDistance = circle.radius;
 
     let newPosition: IdentifiedPoint;
+    let newDirection = circle.movement.directionVector;
     if (!collision.isElastic) {
         const pointOnALine = projectPointToLine(circle.position, line);
         const outOfTheWall =
@@ -89,9 +94,37 @@ export const resolveLineCollision = (
             ...movePointInDirection(pointOnALine, outOfTheWall, distance),
             id
         };
+
+        const intersection = intersectTwoLines(line, {
+            point1: circle.previousPosition,
+            point2: circle.position
+        });
+        if (intersection) {
+            const anotherPointOnALine = projectPointToLine(
+                circle.previousPosition,
+                line
+            );
+            const distanceToLine = calculateDistance(
+                intersection,
+                anotherPointOnALine
+            );
+            const distanceOnTheLine = calculateDistance(
+                circle.previousPosition,
+                anotherPointOnALine
+            );
+            const distanceFromIntersection = Math.sqrt(
+                distanceToLine ** 2 + distanceOnTheLine ** 2
+            );
+            const impactPoint = movePointInDirection(
+                intersection,
+                getDirection(intersection, circle.previousPosition),
+                distanceFromIntersection
+            );
+            newDirection = getDirection(impactPoint, newPosition);
+        }
     }
 
-    return newPosition;
+    return [newPosition, newDirection];
 };
 
 const _collidesWithLine = (
