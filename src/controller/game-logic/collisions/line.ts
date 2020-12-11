@@ -73,13 +73,14 @@ export const resolveLineCollision = (
             ? getDirection(circle.position, pointOnALine)
             : getDirection(pointOnALine, circle.position);
 
-    let newPosition: IdentifiedPoint;
+    let newPosition: Point;
     let newDirection = circle.movement.directionVector;
     if (!collision.isElastic) {
-        newPosition = {
-            ...movePointInDirection(pointOnALine, outOfTheWall, minDistance),
-            id
-        };
+        newPosition = movePointInDirection(
+            pointOnALine,
+            outOfTheWall,
+            minDistance
+        );
     } else {
         const shiftedLine = moveLineInDirection(
             line,
@@ -92,14 +93,11 @@ export const resolveLineCollision = (
         );
         const distance = calculateDistanceToLine(circle.position, shiftedLine);
 
-        newPosition = {
-            ...movePointInDirection(
-                pointOnAShiftedLine,
-                outOfTheWall,
-                distance
-            ),
-            id
-        };
+        newPosition = movePointInDirection(
+            pointOnAShiftedLine,
+            outOfTheWall,
+            distance
+        );
         const intersection = intersectTwoLines(shiftedLine, {
             point1: circle.previousPosition,
             point2: circle.position
@@ -109,7 +107,7 @@ export const resolveLineCollision = (
         }
     }
 
-    return [newPosition, newDirection];
+    return [{ ...newPosition, id }, newDirection];
 };
 
 const _collidesWithLine = (

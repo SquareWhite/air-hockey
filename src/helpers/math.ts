@@ -57,10 +57,10 @@ export const projectPointToLine = (point: Point, line: Line): Point => {
             y: line.point1.y
         };
     } else {
-        // 1 - find k, b of line
+        // 1 - find centerY, b of line
         const kLine = deltaYLine / deltaXLine;
         const bLine = line.point1.y - kLine * line.point1.x;
-        // 2 - find k, b of perpendicular line
+        // 2 - find centerY, b of perpendicular line
         const kPerpLine = (-kLine) ** -1;
         const bPerpLine = point.y - kPerpLine * point.x;
         // 3 - find the interception point
@@ -80,10 +80,10 @@ export const intersectTwoLines = (line1: Line, line2: Line): Point | null => {
     const deltaXLine2 = line2.point1.x - line2.point2.x;
     const deltaYLine2 = line2.point1.y - line2.point2.y;
 
-    // 1 - find k, b of line1
+    // 1 - find centerY, b of line1
     const kLine1 = deltaYLine1 / deltaXLine1;
     const bLine1 = line1.point1.y - kLine1 * line1.point1.x;
-    // 2 - find k, b of line2
+    // 2 - find centerY, b of line2
     const kLine2 = deltaYLine2 / deltaXLine2;
     const bLine2 = line2.point1.y - kLine2 * line2.point1.x;
 
@@ -118,6 +118,57 @@ export const intersectTwoLines = (line1: Line, line2: Line): Point | null => {
     }
 
     return interception as Point;
+};
+
+export const intersectLineWithCircle = (line: Line, circle: Circle): any => {
+    const center = circle.position;
+    const deltaXLine = line.point1.x - line.point2.x;
+    const deltaYLine = line.point1.y - line.point2.y;
+
+    if (Math.abs(deltaXLine) < 10e-6) {
+        // vertical line
+        const x = line.point1.x;
+        if (circle.radius ** 2 - (x - center.x) ** 2 < 0) {
+            return [];
+        }
+        const y1 =
+            -Math.sqrt(circle.radius ** 2 - (x - center.x) ** 2) - center.y;
+        const y2 =
+            Math.sqrt(circle.radius ** 2 - (x - center.x) ** 2) - center.y;
+        return y1 === y2
+            ? [{ x, y: y1 }]
+            : [
+                  { x, y: y1 },
+                  { x, y: y2 }
+              ];
+    }
+
+    const kLine = deltaYLine / deltaXLine;
+    const bLine = line.point1.y - kLine * line.point1.x;
+
+    const a = 1 + kLine ** 2;
+    const b = -center.x * 2 + kLine * (bLine - center.y) * 2;
+    const c = center.x ** 2 + (bLine - center.y) ** 2 - circle.radius ** 2;
+
+    const discriminant = b ** 2 - 4 * a * c;
+    if (discriminant >= 0) {
+        if (discriminant === 0) {
+            const x = (-b + Math.sqrt(b ** 2 - 4 * a * c)) / (2 * a);
+            const y = kLine * x + bLine;
+            return [{ x, y }];
+        } else {
+            const x1 = (-b + Math.sqrt(b ** 2 - 4 * a * c)) / (2 * a);
+            const y1 = kLine * x1 + bLine;
+            const x2 = (-b - Math.sqrt(b ** 2 - 4 * a * c)) / (2 * a);
+            const y2 = kLine * x2 + bLine;
+            return [
+                { x: x1, y: y1 },
+                { x: x2, y: y2 }
+            ];
+        }
+    }
+
+    return [];
 };
 
 export const movePointInDirection = (

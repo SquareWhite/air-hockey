@@ -5,7 +5,9 @@ import {
     Line,
     Direction,
     getDirection,
-    intersectTwoLines
+    intersectTwoLines,
+    intersectLineWithCircle,
+    Circle
 } from '../../src/helpers/math';
 
 describe('math', () => {
@@ -114,11 +116,11 @@ describe('math', () => {
     });
 
     it('intersectTwoLines(line, line)', () => {
-        let line1 = {
+        let line1: Line = {
             point1: { x: 0, y: 0 },
             point2: { x: 100, y: 0 }
         };
-        let line2 = {
+        let line2: Line = {
             point1: { x: 50, y: 50 },
             point2: { x: 50, y: 0 }
         };
@@ -141,5 +143,69 @@ describe('math', () => {
 
         result = intersectTwoLines(line1, line2);
         expect(result).toEqual({ x: 25, y: 25 });
+    });
+
+    it('intersectLineWithCircle(line, circle)', () => {
+        let line: Line = {
+            point1: { x: 5, y: 5 },
+            point2: { x: -5, y: -5 }
+        };
+        let circle: Circle = {
+            position: {
+                x: 0,
+                y: 0
+            },
+            radius: Math.sqrt(2)
+        };
+
+        let result = intersectLineWithCircle(line, circle);
+        expect(result.length).toEqual(2);
+        expect(result[0]).toEqual({ x: 1, y: 1 });
+        expect(result[1]).toEqual({ x: -1, y: -1 });
+
+        line = {
+            point1: { x: -5, y: 1 },
+            point2: { x: 5, y: 1 }
+        };
+        circle = {
+            position: {
+                x: 0,
+                y: 0
+            },
+            radius: 1
+        };
+        result = intersectLineWithCircle(line, circle);
+        expect(result.length).toEqual(1);
+        expect(result[0]).toEqual({ x: 0, y: 1 });
+
+        line = {
+            point1: { x: 1, y: -5 },
+            point2: { x: 1, y: 5 }
+        };
+        circle = {
+            position: {
+                x: 0,
+                y: 0
+            },
+            radius: 1
+        };
+        result = intersectLineWithCircle(line, circle);
+        expect(result.length).toEqual(1);
+        expect(Math.abs(result[0].x - 1)).toBeLessThan(10e-6);
+        expect(Math.abs(result[0].y)).toBeLessThan(10e-6);
+
+        line = {
+            point1: { x: 2, y: -5 },
+            point2: { x: 2, y: 5 }
+        };
+        circle = {
+            position: {
+                x: 0,
+                y: 0
+            },
+            radius: 1
+        };
+        result = intersectLineWithCircle(line, circle);
+        expect(result.length).toEqual(0);
     });
 });

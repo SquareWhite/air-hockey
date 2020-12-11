@@ -32,21 +32,35 @@ export const findCollisionsInState = (state: StateTree): Collision[] => {
         state.circles.otherCircle
     );
 
-    const lines: IdentifiedLine[] = denormalize(state, state.lines).map(
-        (line) => {
+    const arcs: IdentifiedArc[] = denormalize(state, state.arcs);
+
+    const walls: IdentifiedLine[] = [];
+    let middleLine: IdentifiedLine | null = null;
+    denormalize(state, state.lines)
+        .map((line) => {
             const [lineX1, lineY1, lineX2, lineY2] = line.points;
             return {
                 id: line.id,
                 point1: { x: lineX1, y: lineY1 },
                 point2: { x: lineX2, y: lineY2 }
             };
-        }
+        })
+        .forEach((line) => {
+            if (line.id === 'middleLine') {
+                middleLine = line;
+            } else {
+                walls.push(line);
+            }
+        });
+
+    const field = [...walls, ...arcs];
+    const halfOfAField = [...walls, ...arcs, middleLine].filter(
+        (el): el is Exclude<typeof el, null> => !!el
     );
-    const arcs: IdentifiedArc[] = denormalize(state, state.arcs);
 
     return [
-        // ..._findCollisions(circle, [puck, otherCircle, ...lines, ...arcs]),
-        ..._findCollisions(puck, [otherCircle, ...lines, ...arcs])
+        ..._findCollisions(circle, [otherCircle, ...halfOfAField]),
+        ..._findCollisions(puck, [circle, otherCircle, ...field])
     ];
 };
 

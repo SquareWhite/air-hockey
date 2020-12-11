@@ -14,10 +14,11 @@
 
 ### Game features:
 
--   Same for circles and arcs
 -   Make puck move, when it collides with player
 -   Add gates
 -   Add score
+-
+-   Make opponent move
 
 ### Bugs:
 
@@ -41,6 +42,8 @@
 
 ### Future ideas:
 
+-   Make the game start by inserting a coin?
+    (game field lights up, friction for the puck changes, sound of an air pump starts)
 -   Rewrite the view layer using pure canvas api
 -   Rewrite computationally expensive parts of the game
     (e.g. math, collisions) in rust + web assembly

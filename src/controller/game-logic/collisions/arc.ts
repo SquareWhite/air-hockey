@@ -6,7 +6,11 @@ import {
     getDirection,
     Point,
     movePointInDirection,
-    Direction
+    Direction,
+    intersectLineWithCircle,
+    Line,
+    Circle,
+    projectPointToLine
 } from '../../../helpers/math';
 import { GameCircle } from '../../../model/types';
 import {
@@ -41,21 +45,77 @@ export const resolveArcCollision = (
     collision: ArcCollision
 ): [IdentifiedPoint, Direction] => {
     const { circle, object: arc } = collision;
-    const newDirection = circle.movement.directionVector;
     const id = circle.position.id;
 
-    const toTheArcsCenter = getDirection(circle.position, arc.position);
-    const minDistance = arc.radius - circle.radius;
-    const currentDistance = calculateDistance(circle.position, arc.position);
     let newPosition: Point;
-
-    newPosition = movePointInDirection(
-        circle.position,
-        toTheArcsCenter,
-        currentDistance - minDistance + EPSILON
-    );
+    let newDirection = circle.movement.directionVector;
+    if (!collision.isElastic) {
+        const toTheArcsCenter = getDirection(circle.position, arc.position);
+        const minDistance = arc.radius - circle.radius;
+        const currentDistance = calculateDistance(
+            circle.position,
+            arc.position
+        );
+        newPosition = movePointInDirection(
+            circle.position,
+            toTheArcsCenter,
+            currentDistance - minDistance + EPSILON
+        );
+    } else {
+        [newPosition, newDirection] = _bounceCircleOffArc(circle, arc);
+    }
 
     return [{ ...newPosition, id }, newDirection];
+};
+
+const _bounceCircleOffArc = (
+    circle: GameCircle,
+    arc: IdentifiedArc
+): [Point, Direction] => {
+    const travelPath: Line = {
+        point1: circle.previousPosition,
+        point2: circle.position
+    };
+    const travelDistance = calculateDistance(
+        circle.previousPosition,
+        circle.position
+    );
+
+    const collisionBorder: Circle = {
+        position: arc.position,
+        radius: arc.radius - circle.radius
+    };
+    const impactPoints = intersectLineWithCircle(travelPath, collisionBorder);
+    if (impactPoints.length < 1) {
+        throw new Error("Couldn't find any impact points!");
+    }
+    const impactPoint = impactPoints.find((point: Point) => {
+        const prevPosToImpact = calculateDistance(
+            circle.previousPosition,
+            point
+        );
+        const impactToPos = calculateDistance(point, circle.position);
+        return prevPosToImpact + impactToPos - travelDistance < 10e-6;
+    });
+    const centerToImpactLine = {
+        point1: arc.position,
+        point2: impactPoint
+    };
+    const pointOnALine = projectPointToLine(
+        circle.position,
+        centerToImpactLine
+    );
+    const distance = Math.max(
+        calculateDistance(pointOnALine, impactPoint),
+        circle.radius
+    );
+    const newPosition = movePointInDirection(
+        circle.position,
+        getDirection(pointOnALine, impactPoint),
+        distance
+    );
+    const newDirection = getDirection(impactPoint, newPosition);
+    return [newPosition, newDirection];
 };
 
 const _collidesWithArc = (circle: GameCircle, arc: IdentifiedArc): boolean => {
