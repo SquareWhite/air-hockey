@@ -17,7 +17,7 @@
 -   Make puck move, when it collides with player
 -   Add gates
 -   Add score
--
+-   Improve the UI
 -   Make opponent move
 
 ### Bugs:
@@ -28,6 +28,7 @@
 -   Try to fix all collision errors
 -   Add handlers for unfixable edge-case errors (e.g. restart the game instead of blowing up)
 -   Look into firefox performance issues
+-   denormalize doesn't get return type correctly
 
 ### Technical debt:
 

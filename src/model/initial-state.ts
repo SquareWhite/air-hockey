@@ -68,6 +68,14 @@ export const initialState: StateTree = {
                 y: 0
             }
         },
+        otherCircleMovement: {
+            id: 'otherCircleMovement',
+            velocity: 0,
+            directionVector: {
+                x: 0,
+                y: 0
+            }
+        },
         puckMovement: {
             id: 'puckMovement',
             velocity: 0,

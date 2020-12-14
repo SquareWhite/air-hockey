@@ -1,5 +1,5 @@
 import { denormalize } from '../../src/model/denormalize';
-import { GameCircle, StateTree } from '../../src/model/initial-state';
+import { GameCircle, StateTree } from '../../src/model/types';
 
 export const dummyState: StateTree = {
     positions: {
@@ -53,14 +53,16 @@ export const dummyState: StateTree = {
             position: 'circlePos',
             previousPosition: 'circlePrevPos',
             movement: 'circleMovement',
-            radius: 30
+            radius: 30,
+            isElastic: false
         },
         otherCircle: {
             id: 'otherCircle',
             position: 'otherCirclePos',
             previousPosition: 'otherCirclePrevPos',
             movement: 'otherCircleMovement',
-            radius: 30
+            radius: 30,
+            isElastic: false
         }
     },
     lastRenderDate: new Date()

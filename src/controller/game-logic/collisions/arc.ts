@@ -97,6 +97,9 @@ const _bounceCircleOffArc = (
         const impactToPos = calculateDistance(point, circle.position);
         return prevPosToImpact + impactToPos - travelDistance < 10e-6;
     });
+    if (!impactPoint) {
+        throw new Error("Couldn't find any impact points!");
+    }
     const centerToImpactLine = {
         point1: arc.position,
         point2: impactPoint

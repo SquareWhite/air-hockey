@@ -14,19 +14,19 @@ const _pushCircle = ((state) => {
     });
 })(store.getState());
 
-// mouseMove$.subscribe((event) => {
-//     const state = store.getState();
-//     const circle: GameCircle = denormalize(state, state.circles.circle);
+mouseMove$.subscribe((event) => {
+    const state = store.getState();
+    const circle: GameCircle = denormalize(state, state.circles.circle);
 
-//     const distance = calculateDistance(circle.position, {
-//         x: event.correctedX,
-//         y: event.correctedY
-//     });
+    const distance = calculateDistance(circle.position, {
+        x: event.correctedX,
+        y: event.correctedY
+    });
 
-//     const directionVector = getDirection(circle.position, {
-//         x: event.correctedX,
-//         y: event.correctedY
-//     });
+    const directionVector = getDirection(circle.position, {
+        x: event.correctedX,
+        y: event.correctedY
+    });
 
-//     _pushCircle(directionVector, distance);
-// });
+    _pushCircle(directionVector, distance);
+});

@@ -120,7 +120,10 @@ export const intersectTwoLines = (line1: Line, line2: Line): Point | null => {
     return interception as Point;
 };
 
-export const intersectLineWithCircle = (line: Line, circle: Circle): any => {
+export const intersectLineWithCircle = (
+    line: Line,
+    circle: Circle
+): Point[] => {
     const center = circle.position;
     const deltaXLine = line.point1.x - line.point2.x;
     const deltaYLine = line.point1.y - line.point2.y;
