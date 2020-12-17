@@ -4,7 +4,10 @@ import { distinctUntilChanged, share, filter, map } from 'rxjs/operators';
 import { store } from '../model/store';
 import { StateTree } from '../model/types';
 import { KeyCode } from '../constants/keycodes';
-import { findCollisionsInState } from './game-logic/collisions/collisions';
+import {
+    findCollisionsInState,
+    resolveCollisions
+} from './game-logic/collisions/collisions';
 import { Collision } from './game-logic/collisions/types';
 
 export const gameClock$ = interval(15).pipe(share());
@@ -88,3 +91,5 @@ export const collisions$ = positionUpdates$.pipe(
     map(findCollisionsInState),
     filter((value): value is Collision[] => !!value?.length)
 );
+
+export const resolvedCollisions$ = collisions$.pipe(map(resolveCollisions));

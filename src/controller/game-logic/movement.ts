@@ -33,16 +33,54 @@ export const createMoveFunction: CreateMoveFunction = ({
     const { id } = entity;
     let movement = entity.movement;
 
-    store$.subscribe((state: StateTree) => {
-        if (movement !== state.movements[movement.id]) {
-            movement = state.movements[movement.id];
-        }
-    });
-
-    let stopMovingFn: (() => void) | null;
     let isMoving = false;
     let distanceToTarget = 0;
     let currentDistance = 0;
+
+    const stopMovingFn = () => {
+        changeMovementVelocity(movement.id, 0);
+        changeMovementDirection(movement.id, 0, 0);
+        isMoving = false;
+    };
+
+    /*
+     Updating movement value when it's changed from
+     other parts of the application.
+     */
+    store$.subscribe((state: StateTree) => {
+        if (movement !== state.movements[movement.id]) {
+            movement = state.movements[movement.id];
+            isMoving = !!movement.velocity;
+        }
+    });
+
+    // acceleration
+    gameClock$.subscribe(() => {
+        if (currentDistance <= 0) {
+            stopMovingFn();
+        } else {
+            const newVelocity = _calculateVelocity(
+                currentDistance,
+                distanceToTarget,
+                baseVelocity,
+                maxVelocity
+            );
+            changeMovementVelocity(movement.id, newVelocity);
+        }
+    });
+
+    // movement
+    gameClock$.subscribe(() => {
+        const step = Math.min(distanceToTarget, movement.velocity);
+        currentDistance -= step;
+
+        // todo -- updatePositions
+        moveCircle(
+            id,
+            movement.directionVector.x * step,
+            movement.directionVector.y * step
+        );
+    });
 
     return (direction, distance) => {
         changeMovementDirection(movement.id, direction.x, direction.y);
@@ -54,44 +92,10 @@ export const createMoveFunction: CreateMoveFunction = ({
             movement.directionVector.y !== 0;
 
         if (shouldBeMoving && !isMoving) {
-            const accelerationSubscription = gameClock$.subscribe(() => {
-                if (currentDistance <= 0) {
-                    stopMovingFn && stopMovingFn();
-                    stopMovingFn = null;
-                } else {
-                    const newVelocity = _calculateVelocity(
-                        currentDistance,
-                        distanceToTarget,
-                        baseVelocity,
-                        maxVelocity
-                    );
-                    changeMovementVelocity(movement.id, newVelocity);
-                }
-            });
-
-            const movementSubscription = gameClock$.subscribe(() => {
-                const step = Math.min(distanceToTarget, movement.velocity);
-                currentDistance -= step;
-
-                // todo -- updatePositions
-                moveCircle(
-                    id,
-                    movement.directionVector.x * step,
-                    movement.directionVector.y * step
-                );
-            });
-
-            stopMovingFn = () => {
-                accelerationSubscription.unsubscribe();
-                movementSubscription.unsubscribe();
-                changeMovementVelocity(movement.id, baseVelocity);
-                isMoving = false;
-            };
             isMoving = true;
         }
         if (!shouldBeMoving && isMoving) {
-            stopMovingFn && stopMovingFn();
-            stopMovingFn = null;
+            stopMovingFn();
         }
     };
 };

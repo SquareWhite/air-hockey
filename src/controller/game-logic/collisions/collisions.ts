@@ -59,14 +59,15 @@ export const findCollisionsInState = (state: StateTree): Collision[] => {
     );
 
     return [
-        ..._findCollisions(circle, [otherCircle, ...halfOfAField]),
-        ..._findCollisions(puck, [circle, otherCircle, ...field])
+        ..._findCollisions(circle, [puck, ...halfOfAField]),
+        ..._findCollisions(otherCircle, [puck, ...halfOfAField]),
+        ..._findCollisions(puck, [...field])
     ];
 };
 
-export const resolveCollisions = (collisions: Collision[]): void => {
+export const resolveCollisions = (collisions: Collision[]): Collision[] => {
     if (!collisions || !collisions.length) {
-        return;
+        return collisions;
     }
 
     let newPosition: Point | null = null;
@@ -105,6 +106,8 @@ export const resolveCollisions = (collisions: Collision[]): void => {
             newDirection.x,
             newDirection.y
         );
+
+    return collisions;
 };
 
 const _findCollisions = (

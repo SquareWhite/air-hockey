@@ -70,18 +70,23 @@ export const resolveCircleCollision = (
 
     let newPosition: Point;
     let newDirection = circle.movement.directionVector;
-    if (!collision.isElastic) {
-        [newPosition, newDirection] = _pushCircleOutOfTheOtherCircle(
-            circle,
-            otherCircle,
-            collision.type
-        );
-    } else {
-        [newPosition, newDirection] = _bounceCircleOffOtherCircle(
-            circle,
-            otherCircle
-        );
-    }
+    // if (!collision.isElastic) {
+    //     [newPosition, newDirection] = _pushCircleOutOfTheOtherCircle(
+    //         circle,
+    //         otherCircle,
+    //         collision.type
+    //     );
+    // } else {
+    //     [newPosition, newDirection] = _bounceCircleOffOtherCircle(
+    //         circle,
+    //         otherCircle
+    //     );
+    // }
+    [newPosition, newDirection] = _pushCircleOutOfTheOtherCircle(
+        circle,
+        otherCircle,
+        collision.type
+    );
 
     return [{ ...newPosition, id }, newDirection];
 };
@@ -100,32 +105,50 @@ const _pushCircleOutOfTheOtherCircle = (
     const newDirection = circle.movement.directionVector;
     let newPosition: Point;
     if (type === 'CIRCLE_CROSS') {
-        const lineBetweenCircles = {
+        const travelDistance = calculateDistance(
+            circle.previousPosition,
+            circle.position
+        );
+        const travelPath: Line = {
             point1: circle.previousPosition,
-            point2: otherCircle.position
+            point2: circle.position
         };
-        const pointOnALine = projectPointToLine(
-            circle.position,
-            lineBetweenCircles
+        const collisionBorder: Circle = {
+            position: otherCircle.position,
+            radius: otherCircle.radius + circle.radius
+        };
+        const impactPoints = intersectLineWithCircle(
+            travelPath,
+            collisionBorder
         );
-        const dstToCenter = calculateDistance(
-            pointOnALine,
-            otherCircle.position
+        if (impactPoints.length < 1) {
+            throw new Error("Couldn't find any impact points!");
+        }
+        const impactPoint = impactPoints.reduce(
+            (_impactPoint: Point, point: Point) => {
+                if (!_impactPoint) {
+                    return point;
+                }
+                const currentImpactToPos = calculateDistance(
+                    _impactPoint,
+                    circle.previousPosition
+                );
+
+                const prevPosToImpact = calculateDistance(
+                    circle.previousPosition,
+                    point
+                );
+                const impactToPos = calculateDistance(point, circle.position);
+                return prevPosToImpact + impactToPos - travelDistance < 10e-6 &&
+                    prevPosToImpact < currentImpactToPos
+                    ? point
+                    : _impactPoint;
+            }
         );
-        const movedPointOnALine = movePointInDirection(
-            pointOnALine,
-            getDirection(pointOnALine, otherCircle.position),
-            2 * dstToCenter
-        );
-        const movedDstToCenter = calculateDistance(
-            movedPointOnALine,
-            otherCircle.position
-        );
-        newPosition = movePointInDirection(
-            movedPointOnALine,
-            outOfTheCircle,
-            minDistance - movedDstToCenter
-        );
+        if (!impactPoint) {
+            throw new Error("Couldn't find any impact points!");
+        }
+        newPosition = impactPoint;
     } else {
         newPosition = movePointInDirection(
             circle.position,
@@ -133,59 +156,6 @@ const _pushCircleOutOfTheOtherCircle = (
             minDistance - currentDistance
         );
     }
-    return [newPosition, newDirection];
-};
-
-const _bounceCircleOffOtherCircle = (
-    circle: GameCircle,
-    otherCircle: IdentifiedCircle
-): [Point, Direction] => {
-    const travelPath: Line = {
-        point1: circle.previousPosition,
-        point2: circle.position
-    };
-    const travelDistance = calculateDistance(
-        circle.previousPosition,
-        circle.position
-    );
-
-    const collisionBorder: Circle = {
-        position: otherCircle.position,
-        radius: otherCircle.radius + circle.radius
-    };
-    const impactPoints = intersectLineWithCircle(travelPath, collisionBorder);
-    if (impactPoints.length < 1) {
-        throw new Error("Couldn't find any impact points!");
-    }
-    const impactPoint = impactPoints.find((point: Point) => {
-        const prevPosToImpact = calculateDistance(
-            circle.previousPosition,
-            point
-        );
-        const impactToPos = calculateDistance(point, circle.position);
-        return prevPosToImpact + impactToPos - travelDistance < 10e-6;
-    });
-    if (!impactPoint) {
-        throw new Error("Couldn't find any impact points!");
-    }
-    const centerToImpactLine = {
-        point1: otherCircle.position,
-        point2: impactPoint
-    };
-    const pointOnALine = projectPointToLine(
-        circle.position,
-        centerToImpactLine
-    );
-    const distance = Math.max(
-        calculateDistance(pointOnALine, impactPoint),
-        circle.radius
-    );
-    const newPosition = movePointInDirection(
-        circle.position,
-        getDirection(pointOnALine, impactPoint),
-        distance
-    );
-    const newDirection = getDirection(impactPoint, newPosition);
     return [newPosition, newDirection];
 };
 

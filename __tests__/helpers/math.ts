@@ -89,6 +89,9 @@ describe('math', () => {
         expect(Math.abs(result.x) - Math.sqrt(0.5)).toBeLessThan(10e-6);
         expect(Math.abs(result.y) - Math.sqrt(0.5)).toBeLessThan(10e-6);
         expect(Math.abs(result.x ** 2 + result.y ** 2 - 1)).toBeLessThan(10e-6);
+
+        point = centerPoint;
+        expect(() => getDirection(point, centerPoint)).toThrow();
     });
 
     it('getDirection(angle)', () => {

@@ -21,22 +21,22 @@ export const initialState: StateTree = {
         otherCirclePos: {
             id: 'otherCirclePos',
             x: FIELD_WIDTH / 2,
-            y: FIELD_HEIGHT * (4 / 4)
+            y: FIELD_HEIGHT * (2 / 4)
         },
         otherCirclePrevPos: {
             id: 'otherCirclePrevPos',
             x: FIELD_WIDTH / 2,
-            y: FIELD_HEIGHT * (4 / 4)
+            y: FIELD_HEIGHT * (2 / 4)
         },
         puckPos: {
             id: 'puckPos',
             x: FIELD_WIDTH / 2,
-            y: FIELD_HEIGHT * (4 / 5)
+            y: FIELD_HEIGHT * (4 / 4)
         },
         puckPrevPos: {
             id: 'puckPrevPos',
             x: FIELD_WIDTH / 2,
-            y: FIELD_HEIGHT * (4 / 5)
+            y: FIELD_HEIGHT * (4 / 4)
         },
         topLeftCornerPos: {
             id: 'topLeftCornerPos',

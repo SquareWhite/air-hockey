@@ -231,6 +231,12 @@ export const getDirection: GetDirection = (from: any, to?: any) => {
     let direction: Direction;
 
     if (from && to) {
+        if (pointsAreEqual(from, to)) {
+            throw new Error(
+                "Can't identify direction between identical points"
+            );
+        }
+
         const distance = calculateDistance(from, to);
         const deltaX = to.x - from.x;
         const deltaY = to.y - from.y;
@@ -280,6 +286,13 @@ export const getDirection: GetDirection = (from: any, to?: any) => {
     }
 
     return direction;
+};
+
+export const pointsAreEqual = (point1: Point, point2: Point): boolean => {
+    return (
+        Math.abs(point1.x - point2.x) < 10e-6 &&
+        Math.abs(point1.y - point2.y) < 10e-6
+    );
 };
 
 export const getArcBeginningAndEnd = (arc: Arc): [Point, Point] => {
