@@ -115,7 +115,6 @@ noCollisions$.subscribe(() => {
 export const resolvedCollisions$ = collisions$.pipe(
     map((collisions) => {
         timesTriedToResolve++;
-        console.log(timesTriedToResolve);
         if (timesTriedToResolve > 5) {
             throw new Error(
                 'Exceeded the number of tries for collision resolution!'
@@ -124,6 +123,7 @@ export const resolvedCollisions$ = collisions$.pipe(
         return resolveCollisions(collisions);
     }),
     catchError((err) => {
+        console.log('Failed to resolve collisions, restoring state...');
         restoreState();
         throw new Error();
     }),
