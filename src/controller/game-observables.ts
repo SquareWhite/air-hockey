@@ -1,5 +1,12 @@
-import { fromEvent, merge, interval, from } from 'rxjs';
-import { distinctUntilChanged, share, filter, map } from 'rxjs/operators';
+import { fromEvent, merge, interval, from, partition } from 'rxjs';
+import {
+    distinctUntilChanged,
+    share,
+    filter,
+    map,
+    catchError,
+    retry
+} from 'rxjs/operators';
 
 import { store } from '../model/store';
 import { StateTree } from '../model/types';
@@ -9,6 +16,7 @@ import {
     resolveCollisions
 } from './game-logic/collisions/collisions';
 import { Collision } from './game-logic/collisions/types';
+import { restoreState, saveState } from '../model/action-creators';
 
 export const gameClock$ = interval(15).pipe(share());
 
@@ -36,14 +44,15 @@ export const mouseMove$ = fromEvent<MouseEvent>(
             'wrapper'
         )[0] as HTMLElement;
         const container = document.getElementById('container')!;
-        const xCorrection = container.offsetLeft - wrapper.offsetLeft + 15;
-        const yCorrection = container.offsetTop - wrapper.offsetTop + 16;
+        const xCorrection = container.offsetLeft - wrapper.offsetLeft;
+        const yCorrection = container.offsetTop - wrapper.offsetTop;
         return {
             ...event,
             correctedX: event.pageX - xCorrection,
             correctedY: event.pageY - yCorrection
         };
-    })
+    }),
+    share()
 );
 
 export const mouseClick$ = fromEvent<MouseEvent>(
@@ -55,8 +64,8 @@ export const mouseClick$ = fromEvent<MouseEvent>(
             'wrapper'
         )[0] as HTMLElement;
         const container = document.getElementById('container')!;
-        const xCorrection = container.offsetLeft - wrapper.offsetLeft + 15;
-        const yCorrection = container.offsetTop - wrapper.offsetTop + 16;
+        const xCorrection = container.offsetLeft - wrapper.offsetLeft;
+        const yCorrection = container.offsetTop - wrapper.offsetTop;
         return {
             ...event,
             correctedX: event.pageX - xCorrection,
@@ -87,9 +96,36 @@ export const positionUpdates$ = store$.pipe(
     share()
 );
 
-export const collisions$ = positionUpdates$.pipe(
+const possibleCollision$ = positionUpdates$.pipe(
     map(findCollisionsInState),
-    filter((value): value is Collision[] => !!value?.length)
+    share()
 );
 
-export const resolvedCollisions$ = collisions$.pipe(map(resolveCollisions));
+export const [collisions$, noCollisions$] = partition(
+    possibleCollision$,
+    (value): value is Collision[] => !!value?.length
+);
+
+let timesTriedToResolve = 0;
+noCollisions$.subscribe(() => {
+    timesTriedToResolve = 0;
+    saveState();
+});
+
+export const resolvedCollisions$ = collisions$.pipe(
+    map((collisions) => {
+        timesTriedToResolve++;
+        console.log(timesTriedToResolve);
+        if (timesTriedToResolve > 5) {
+            throw new Error(
+                'Exceeded the number of tries for collision resolution!'
+            );
+        }
+        return resolveCollisions(collisions);
+    }),
+    catchError((err) => {
+        restoreState();
+        throw new Error();
+    }),
+    retry()
+);

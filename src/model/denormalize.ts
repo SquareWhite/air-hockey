@@ -5,7 +5,10 @@ const REFERENCE_FIELDS = ['movement', 'position', 'previousPosition'] as const;
 type ReferenceField = typeof REFERENCE_FIELDS[number];
 type UndefinedReferences = { [key in ReferenceField]: undefined };
 
-type EntityCollection = Exclude<keyof StateTree, 'lastRenderDate'>;
+type EntityCollection = Exclude<
+    keyof StateTree,
+    'lastRenderDate' | 'lastStateWithoutCollisions'
+>;
 type EntityId = keyof StateTree[EntityCollection];
 type Entity = StateTree[EntityCollection][EntityId];
 type Denormalized<T extends Entity> = Omit<T, ReferenceField> &

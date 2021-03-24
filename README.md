@@ -24,8 +24,9 @@
     - Circle can jump through a little space between the other circle and a wall
       Also two moving circles may collide poorly (jump through each other).
       I think this could be fixed with checks for collisions in intermediate points.
-    - Try to fix all collision errors
-    - Add handlers for unfixable edge-case errors (e.g. restart the game instead of blowing up)
+    - Try to fix all collision errors:
+      Puck can nail circle into two corners.
+      When you hit the puck from above, the circle appears to teleport up
     - Look into firefox performance issues
     - denormalize doesn't get return type correctly
 

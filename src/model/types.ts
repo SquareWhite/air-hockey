@@ -73,4 +73,5 @@ export type StateTree = {
         };
     };
     lastRenderDate: Date;
+    lastStateWithoutCollisions: StateTree | null;
 };

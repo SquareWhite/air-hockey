@@ -8,7 +8,6 @@ import { denormalize } from '../../../model/denormalize';
 import {
     Collision,
     IdentifiedArc,
-    IdentifiedCircle,
     IdentifiedLine,
     IdentifiedPoint
 } from './types';
@@ -112,9 +111,9 @@ export const resolveCollisions = (collisions: Collision[]): Collision[] => {
 
 const _findCollisions = (
     circle: GameCircle,
-    objects: (IdentifiedLine | IdentifiedCircle | IdentifiedArc)[]
+    objects: (IdentifiedLine | GameCircle | IdentifiedArc)[]
 ): Collision[] => {
-    const otherCircles: IdentifiedCircle[] = [];
+    const otherCircles: GameCircle[] = [];
     const lines: IdentifiedLine[] = [];
     const arcs: IdentifiedArc[] = [];
 

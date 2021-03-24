@@ -4,7 +4,9 @@ import {
     CHANGE_MOVEMENT_DIRECTION,
     CHANGE_MOVEMENT_VELOCITY,
     MOVE_CIRCLE,
-    MOVE_CIRCLE_ABSOLUTE
+    MOVE_CIRCLE_ABSOLUTE,
+    RESTORE_STATE,
+    SAVE_STATE
 } from './action-types';
 import { denormalize } from './denormalize';
 import { initialState } from './initial-state';
@@ -108,6 +110,26 @@ export const reducer: Reducer<StateTree, Action> = (
                 }
             }
         };
+    }
+
+    if (action.type === SAVE_STATE) {
+        return {
+            ...state,
+            lastStateWithoutCollisions: state
+        };
+    }
+
+    if (action.type === RESTORE_STATE && state.lastStateWithoutCollisions) {
+        const oldState = {
+            ...state.lastStateWithoutCollisions
+        };
+        for (const movementId in oldState.movements) {
+            if (movementId in oldState.movements) {
+                oldState.movements[movementId].velocity = 0;
+                oldState.movements[movementId].directionVector = { x: 0, y: 0 };
+            }
+        }
+        return oldState;
     }
 
     return state;

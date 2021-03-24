@@ -3,7 +3,6 @@ import { Point, Line, Circle, Arc } from '../../../helpers/math';
 
 export type IdentifiedPoint = Point & { id: string };
 export type IdentifiedLine = Line & { id: string };
-export type IdentifiedCircle = Circle & { id: string };
 export type IdentifiedArc = Arc & { id: string };
 
 export type LineCollision = {
@@ -17,7 +16,7 @@ export type CircleCollision = {
     type: 'CIRCLE' | 'CIRCLE_CROSS';
     isElastic: boolean;
     circle: GameCircle;
-    object: IdentifiedCircle;
+    object: GameCircle;
 };
 
 export type ArcCollision = {

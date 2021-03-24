@@ -1,10 +1,10 @@
 import { StateTree } from './types';
 
-export const FIELD_WIDTH = 400;
+export const FIELD_WIDTH = 370;
 export const FIELD_HEIGHT = 700;
 export const FIELD_MARGIN = 100;
 export const FIELD_EDGE_RADIUS = 50;
-export const CORNER_RADIUS = 90;
+export const CORNER_RADIUS = 80;
 
 export const initialState: StateTree = {
     positions: {
@@ -188,5 +188,6 @@ export const initialState: StateTree = {
             isElastic: true
         }
     },
-    lastRenderDate: new Date()
+    lastRenderDate: new Date(),
+    lastStateWithoutCollisions: null
 };

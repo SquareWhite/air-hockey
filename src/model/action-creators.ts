@@ -2,7 +2,9 @@ import {
     CHANGE_MOVEMENT_DIRECTION,
     CHANGE_MOVEMENT_VELOCITY,
     MOVE_CIRCLE,
-    MOVE_CIRCLE_ABSOLUTE
+    MOVE_CIRCLE_ABSOLUTE,
+    RESTORE_STATE,
+    SAVE_STATE
 } from './action-types';
 import { store } from './store';
 
@@ -41,4 +43,14 @@ export const changeMovementVelocity = (id: string, velocity: number) =>
             id,
             velocity
         }
+    });
+
+export const saveState = () =>
+    store.dispatch({
+        type: SAVE_STATE
+    });
+
+export const restoreState = () =>
+    store.dispatch({
+        type: RESTORE_STATE
     });
