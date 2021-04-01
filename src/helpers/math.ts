@@ -285,6 +285,13 @@ export const getDirection: GetDirection = (from: any, to?: any) => {
         throw new Error('Wrong arguments passed into getDirection()!');
     }
 
+    if (Math.abs(direction.x) < 10e-6) {
+        direction.x = 0;
+    }
+    if (Math.abs(direction.y) < 10e-6) {
+        direction.y = 0;
+    }
+
     return direction;
 };
 

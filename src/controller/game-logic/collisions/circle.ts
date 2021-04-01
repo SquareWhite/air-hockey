@@ -167,10 +167,16 @@ const _crossedTheCircle = (
     circle: GameCircle,
     otherCircle: GameCircle
 ): boolean => {
-    const prevPosition: Point = circle.previousPosition;
+    // Edge-case for when the circle is not moving
+    if (
+        Math.abs(circle.previousPosition.x - circle.position.x) < EPSILON &&
+        Math.abs(circle.previousPosition.y - circle.position.y) < EPSILON
+    ) {
+        return false;
+    }
 
     const intersection = projectPointToLine(otherCircle.position, {
-        point1: prevPosition,
+        point1: circle.previousPosition,
         point2: circle.position
     });
 
@@ -182,7 +188,7 @@ const _crossedTheCircle = (
         return false;
     }
 
-    const prevDirection = getDirection(prevPosition, intersection);
+    const prevDirection = getDirection(circle.previousPosition, intersection);
     const newDirection = getDirection(circle.position, intersection);
     const collisionOccured =
         Math.sign(newDirection.x) !== Math.sign(prevDirection.x) ||

@@ -24,12 +24,13 @@
 
     - Puck can nail circle into two corners.
     - When you hit the puck from above, the circle appears to teleport up
-    - You can hit the puck through the middle line
     - Look into firefox performance issues
     - denormalize doesn't get return type correctly
 
 ### Technical debt
 
+    - rename circle, otherCircle
+    - refactor second epsilone 10e-6?
     - Fix markup
     - TODOs
     - Refactor types: actions should be typed

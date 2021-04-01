@@ -50,7 +50,19 @@ resolvedCollisions$.subscribe((collisions: Collision[]) => {
             (coll.circle.id === 'circle' || coll.circle.id === 'otherCircle') &&
             coll.object.id === 'puck'
     );
+
     if (!circleCollision) {
+        return;
+    }
+
+    const lineCrossCollision = collisions.find(
+        (coll) =>
+            coll.circle.id === circleCollision.circle.id &&
+            (coll.type === 'LINE_CROSS' || coll.type === 'LINE') &&
+            coll.object.id === 'middleLine'
+    );
+
+    if (lineCrossCollision) {
         return;
     }
 
