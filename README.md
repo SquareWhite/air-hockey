@@ -23,7 +23,6 @@
 ### Bugs
 
     - Puck can nail circle into two corners.
-    - When you hit the puck from above, the circle appears to teleport up
     - Look into firefox performance issues
     - denormalize doesn't get return type correctly
 

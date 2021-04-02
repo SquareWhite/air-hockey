@@ -135,9 +135,9 @@ export const intersectLineWithCircle = (
             return [];
         }
         const y1 =
-            -Math.sqrt(circle.radius ** 2 - (x - center.x) ** 2) - center.y;
+            -Math.sqrt(circle.radius ** 2 - (x - center.x) ** 2) + center.y;
         const y2 =
-            Math.sqrt(circle.radius ** 2 - (x - center.x) ** 2) - center.y;
+            Math.sqrt(circle.radius ** 2 - (x - center.x) ** 2) + center.y;
         return y1 === y2
             ? [{ x, y: y1 }]
             : [
