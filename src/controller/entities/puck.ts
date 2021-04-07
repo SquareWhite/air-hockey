@@ -19,6 +19,7 @@ import { denormalize } from '../../model/denormalize';
 import { GameCircle } from '../../model/types';
 import { CircleCollision, Collision } from '../game-logic/collisions/types';
 import { findCirclePositionAtImpact } from '../utils';
+import { FIELD_HEIGHT, FIELD_MARGIN } from '../../model/initial-state';
 
 const _pushPuck = ((state) => {
     const puck: GameCircle = denormalize(state, state.circles.puck);
@@ -57,11 +58,14 @@ resolvedCollisions$.subscribe((collisions: Collision[]) => {
         return;
     }
 
+    const middleLineY = FIELD_HEIGHT / 2 + FIELD_MARGIN;
     const lineCrossCollision = collisions.find(
         (coll) =>
             coll.circle.id === circleCollision.circle.id &&
             (coll.type === 'LINE_CROSS' || coll.type === 'LINE') &&
-            coll.object.id === 'middleLine'
+            coll.object.id === 'middleLine' &&
+            coll.circle.position.y >
+                coll.object.point1.y - (2 / 3) * coll.circle.radius
     );
 
     if (lineCrossCollision) {
@@ -78,7 +82,7 @@ resolvedCollisions$.subscribe((collisions: Collision[]) => {
     let velocity;
     let direction;
     try {
-        const speedMultiplier = 1;
+        const speedMultiplier = 8;
         [velocity, direction] = _exchangeMomentums(
             puck,
             circle,
