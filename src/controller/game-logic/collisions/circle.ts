@@ -8,9 +8,11 @@ import {
     Direction,
     intersectLineWithCircle,
     Circle,
-    Line
+    Line,
+    pointIsInBetweenTwoOther
 } from '../../../helpers/math';
 import { GameCircle } from '../../../model/types';
+import { findCirclePositionAtImpact } from '../../utils';
 import { Collision, CircleCollision, IdentifiedPoint } from './types';
 
 export const findCircleCollisions = (
@@ -88,9 +90,9 @@ const _pushCircleOutOfTheOtherCircle = (
     const newDirection = circle.movement.directionVector;
     let newPosition: Point;
     if (circle.movement.velocity !== 0) {
-        newPosition = _findImpactPoint(circle, otherCircle);
+        newPosition = findCirclePositionAtImpact(circle, otherCircle);
     } else if (otherCircle.movement.velocity !== 0) {
-        const impactPoint = _findImpactPoint(otherCircle, circle);
+        const impactPoint = findCirclePositionAtImpact(otherCircle, circle);
         newPosition = movePointInDirection(
             circle.position,
             getDirection(impactPoint, circle.position),
@@ -104,53 +106,6 @@ const _pushCircleOutOfTheOtherCircle = (
         );
     }
     return [newPosition, newDirection];
-};
-
-const _findImpactPoint = (
-    circle: GameCircle,
-    otherCircle: GameCircle
-): Point => {
-    const travelDistance = calculateDistance(
-        circle.previousPosition,
-        circle.position
-    );
-    const travelPath: Line = {
-        point1: circle.previousPosition,
-        point2: circle.position
-    };
-    const collisionBorder: Circle = {
-        position: otherCircle.position,
-        radius: otherCircle.radius + circle.radius
-    };
-    const impactPoints = intersectLineWithCircle(travelPath, collisionBorder);
-    if (impactPoints.length < 1) {
-        throw new Error("Couldn't find any impact points!");
-    }
-    const impactPoint = impactPoints.reduce(
-        (_impactPoint: Point, point: Point) => {
-            if (!_impactPoint) {
-                return point;
-            }
-            const currentImpactToPos = calculateDistance(
-                _impactPoint,
-                circle.previousPosition
-            );
-
-            const prevPosToImpact = calculateDistance(
-                circle.previousPosition,
-                point
-            );
-            const impactToPos = calculateDistance(point, circle.position);
-            return prevPosToImpact + impactToPos - travelDistance < 10e-6 &&
-                prevPosToImpact < currentImpactToPos
-                ? point
-                : _impactPoint;
-        }
-    );
-    if (!impactPoint) {
-        throw new Error("Couldn't find any impact points!");
-    }
-    return impactPoint;
 };
 
 const _collidesWithCircle = (
@@ -188,11 +143,11 @@ const _crossedTheCircle = (
         return false;
     }
 
-    const prevDirection = getDirection(circle.previousPosition, intersection);
-    const newDirection = getDirection(circle.position, intersection);
-    const collisionOccured =
-        Math.sign(newDirection.x) !== Math.sign(prevDirection.x) ||
-        Math.sign(newDirection.y) !== Math.sign(prevDirection.y);
+    const collisionOccured = pointIsInBetweenTwoOther(
+        intersection,
+        circle.previousPosition,
+        circle.position
+    );
 
     return collisionOccured;
 };

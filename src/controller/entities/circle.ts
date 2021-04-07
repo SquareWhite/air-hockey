@@ -8,7 +8,7 @@ import { GameCircle } from '../../model/types';
 const _pushCircle = ((state) => {
     const circle: GameCircle = denormalize(state, state.circles.circle);
     return createMoveFunction({
-        baseVelocity: 6,
+        baseVelocity: 10,
         maxVelocity: 20,
         entity: circle
     });

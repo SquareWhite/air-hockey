@@ -9,7 +9,7 @@ import { throttleTime } from 'rxjs/operators';
 const _pushCircle = ((state) => {
     const circle: GameCircle = denormalize(state, state.circles.otherCircle);
     return createMoveFunction({
-        baseVelocity: 6,
+        baseVelocity: 10,
         maxVelocity: 20,
         entity: circle
     });
@@ -24,7 +24,7 @@ gameClock$.pipe(throttleTime(100)).subscribe((event) => {
     );
 
     const directionVector = getDirection(otherCircle.position, puck.position);
-    const distance = Math.random() * 50 + 50;
+    const distance = Math.random() * 80 + 80;
 
     _pushCircle(directionVector, distance);
 });

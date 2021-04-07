@@ -11,12 +11,14 @@ import {
     measureAngle,
     movePointInDirection,
     Point,
+    pointIsInBetweenTwoOther,
     pointsAreEqual,
     projectPointToLine
 } from '../../helpers/math';
 import { denormalize } from '../../model/denormalize';
 import { GameCircle } from '../../model/types';
 import { CircleCollision, Collision } from '../game-logic/collisions/types';
+import { findCirclePositionAtImpact } from '../utils';
 
 const _pushPuck = ((state) => {
     const puck: GameCircle = denormalize(state, state.circles.puck);
@@ -76,7 +78,7 @@ resolvedCollisions$.subscribe((collisions: Collision[]) => {
     let velocity;
     let direction;
     try {
-        const speedMultiplier = 15;
+        const speedMultiplier = 1;
         [velocity, direction] = _exchangeMomentums(
             puck,
             circle,
@@ -93,100 +95,21 @@ const _exchangeMomentums = (
     otherCircle: GameCircle,
     speedMultiplier: number
 ): [number, Direction] => {
-    let impactPoint;
-    if (!pointsAreEqual(circle.position, circle.previousPosition)) {
-        const travelPath: Line = {
-            point1: circle.previousPosition,
-            point2: circle.position
-        };
-        const travelDistance = calculateDistance(
-            circle.previousPosition,
-            circle.position
-        );
+    const circleAtTheMomentOfImpact = findCirclePositionAtImpact(
+        circle,
+        otherCircle
+    );
+    // tslint:disable-next-line: prefer-const
+    let [newPosition, newDirection] = _predictPositionAfterImpact(
+        circle,
+        otherCircle,
+        circleAtTheMomentOfImpact
+    );
 
-        const collisionBorder: Circle = {
-            position: otherCircle.position,
-            radius: otherCircle.radius + circle.radius
-        };
-        const impactPoints = intersectLineWithCircle(
-            travelPath,
-            collisionBorder
-        );
-        if (impactPoints.length < 1) {
-            throw new Error("Couldn't find any impact points!");
-        }
-        impactPoint = impactPoints.reduce(
-            (_impactPoint: Point, point: Point) => {
-                if (!_impactPoint) {
-                    return point;
-                }
-                const currentImpactToPos = calculateDistance(
-                    _impactPoint,
-                    circle.previousPosition
-                );
-
-                const prevPosToImpact = calculateDistance(
-                    circle.previousPosition,
-                    point
-                );
-                const impactToPos = calculateDistance(point, circle.position);
-                return prevPosToImpact + impactToPos - travelDistance < 10e-6 &&
-                    prevPosToImpact < currentImpactToPos
-                    ? point
-                    : _impactPoint;
-            }
-        );
-        if (!impactPoint) {
-            throw new Error("Couldn't find any impact points!");
-        }
-    } else {
-        impactPoint = circle.position;
-    }
-
-    const centerToImpactLine = {
-        point1: otherCircle.position,
-        point2: impactPoint
-    };
-    const centerToImpact = getDirection(otherCircle.position, impactPoint);
-
-    let newPosition;
-    let newDirection = { x: 0, y: 0 };
-    if (
-        !pointsAreEqual(circle.previousPosition, circle.position) &&
-        pointsAreEqual(impactPoint, circle.previousPosition)
-    ) {
-        const pointOnALine = projectPointToLine(
-            circle.position,
-            centerToImpactLine
-        );
-        const distance = Math.max(
-            calculateDistance(pointOnALine, impactPoint),
-            circle.radius
-        );
-        newPosition = movePointInDirection(
-            circle.position,
-            getDirection(pointOnALine, impactPoint),
-            distance
-        );
-        newDirection = getDirection(impactPoint, newPosition);
-    } else if (!pointsAreEqual(circle.previousPosition, circle.position)) {
-        const pointOnALine = projectPointToLine(
-            circle.previousPosition,
-            centerToImpactLine
-        );
-        const distance = calculateDistance(
-            pointOnALine,
-            circle.previousPosition
-        );
-        newPosition = pointsAreEqual(circle.previousPosition, pointOnALine)
-            ? circle.previousPosition
-            : movePointInDirection(
-                  circle.previousPosition,
-                  getDirection(circle.previousPosition, pointOnALine),
-                  2 * distance
-              );
-        newDirection = getDirection(impactPoint, newPosition);
-    }
+    const centerToImpact = getDirection(
+        otherCircle.position,
+        circleAtTheMomentOfImpact
+    );
 
     let velocity = circle.movement.velocity * speedMultiplier;
     if (otherCircle.movement.velocity > 0) {
@@ -218,4 +141,74 @@ const _exchangeMomentums = (
     }
 
     return [velocity, newDirection];
+};
+
+const _predictPositionAfterImpact = (
+    circle: GameCircle,
+    otherCircle: GameCircle,
+    circleAtTheMomentOfImpact: Point
+): [Point, Direction] => {
+    let newPosition: Point = circle.position;
+    let newDirection = { x: 0, y: 0 };
+
+    const centerToImpactLine = {
+        point1: otherCircle.position,
+        point2: circleAtTheMomentOfImpact
+    };
+
+    if (
+        !pointsAreEqual(circle.previousPosition, circle.position) &&
+        pointsAreEqual(circleAtTheMomentOfImpact, circle.previousPosition)
+    ) {
+        const pointOnALine = projectPointToLine(
+            circle.position,
+            centerToImpactLine
+        );
+        const distance = Math.max(
+            calculateDistance(pointOnALine, circleAtTheMomentOfImpact),
+            circle.radius
+        );
+        newPosition = movePointInDirection(
+            circle.position,
+            getDirection(pointOnALine, circleAtTheMomentOfImpact),
+            distance
+        );
+        newDirection = getDirection(circleAtTheMomentOfImpact, newPosition);
+    } else if (!pointsAreEqual(circle.previousPosition, circle.position)) {
+        const pointOnALine = projectPointToLine(
+            circle.previousPosition,
+            centerToImpactLine
+        );
+        const distance = calculateDistance(
+            pointOnALine,
+            circle.previousPosition
+        );
+
+        const circleMovedTowardsOtherCircle = !pointIsInBetweenTwoOther(
+            pointOnALine,
+            circleAtTheMomentOfImpact,
+            otherCircle.position
+        );
+        if (circleMovedTowardsOtherCircle) {
+            newPosition = pointsAreEqual(circle.previousPosition, pointOnALine)
+                ? circle.previousPosition
+                : movePointInDirection(
+                      circle.previousPosition,
+                      getDirection(circle.previousPosition, pointOnALine),
+                      2 * distance
+                  );
+            newDirection = getDirection(circleAtTheMomentOfImpact, newPosition);
+        } else {
+            newPosition = pointsAreEqual(circle.previousPosition, pointOnALine)
+                ? circle.previousPosition
+                : movePointInDirection(
+                      circle.previousPosition,
+                      getDirection(circle.previousPosition, circle.position),
+                      2 * distance
+                  );
+            newDirection = getDirection(circleAtTheMomentOfImpact, newPosition);
+        }
+    }
+
+    return [newPosition, newDirection];
 };

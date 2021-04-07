@@ -337,3 +337,16 @@ export const measureAngle = (p1: Point, p2: Point, p3: Point): number => {
         Math.abs(p1ToRightAngle + p1ToP2 - rightAngleToP2) < EPSILON;
     return measuredAngleIsAccute ? angle : 180 - angle;
 };
+
+export const pointIsInBetweenTwoOther = (
+    point: Point,
+    p1: Point,
+    p2: Point
+): boolean => {
+    const p1ToPoint = getDirection(p1, point);
+    const p2ToPoint = getDirection(p2, point);
+    return (
+        Math.sign(p1ToPoint.x) !== Math.sign(p2ToPoint.x) ||
+        Math.sign(p1ToPoint.y) !== Math.sign(p2ToPoint.y)
+    );
+};
