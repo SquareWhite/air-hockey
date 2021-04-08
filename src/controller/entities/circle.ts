@@ -10,7 +10,8 @@ const _pushCircle = ((state) => {
     return createMoveFunction({
         baseVelocity: 10,
         maxVelocity: 20,
-        entity: circle
+        entity: circle,
+        type: 'player'
     });
 })(store.getState());
 

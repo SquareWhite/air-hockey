@@ -26,7 +26,8 @@ export const renderTree = (tree: StateTree) => {
             new Konva.Circle({
                 ...circle.position,
                 radius: circle.radius,
-                stroke: 'black',
+                // stroke: 'black',
+                fill: circle.id === 'puck' ? '#9093a2' : '#8fc0a9',
                 strokeWidth: 1,
                 id: circle.id
             })
@@ -37,7 +38,7 @@ export const renderTree = (tree: StateTree) => {
         objects.push(
             new Konva.Line({
                 points: line.points,
-                stroke: 'black',
+                stroke: '#68b0ab',
                 strokeWidth: 1
             })
         )
@@ -51,7 +52,7 @@ export const renderTree = (tree: StateTree) => {
                 outerRadius: arc.radius,
                 angle: arc.angle,
                 rotation: arc.rotation,
-                stroke: 'black',
+                stroke: '#68b0ab',
                 strokeWidth: 1
             })
         )

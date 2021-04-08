@@ -22,15 +22,13 @@
 
 ### Bugs
 
-    - puck is gliding around the circle again
     - Puck can nail circle into two corners.
-    - Opponent freezes when the puck is near the middle line
     - Look into firefox performance issues
-    - denormalize doesn't get return type correctly
 
 ### Technical debt
 
     - rename circle, otherCircle
+    - denormalize doesn't get return type correctly
     - refactor second epsilone 10e-6?
     - Fix markup
     - TODOs

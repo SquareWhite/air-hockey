@@ -4,19 +4,19 @@ export const FIELD_WIDTH = 370;
 export const FIELD_HEIGHT = 700;
 export const FIELD_MARGIN = 100;
 export const FIELD_EDGE_RADIUS = 50;
-export const CORNER_RADIUS = 80;
+export const CORNER_RADIUS = 100;
 
 export const initialState: StateTree = {
     positions: {
         circlePos: {
             id: 'circlePos',
             x: FIELD_WIDTH / 2 + 100,
-            y: FIELD_HEIGHT * (3 / 4)
+            y: FIELD_HEIGHT * (4 / 4)
         },
         circlePrevPos: {
             id: 'circlePrevPos',
             x: FIELD_WIDTH / 2 + 100,
-            y: FIELD_HEIGHT * (3 / 4)
+            y: FIELD_HEIGHT * (4 / 4)
         },
         otherCirclePos: {
             id: 'otherCirclePos',
@@ -30,13 +30,13 @@ export const initialState: StateTree = {
         },
         puckPos: {
             id: 'puckPos',
-            x: FIELD_WIDTH / 2,
-            y: FIELD_HEIGHT * (4 / 4)
+            x: FIELD_WIDTH / 2 + FIELD_MARGIN,
+            y: FIELD_HEIGHT * (3 / 4) + FIELD_MARGIN
         },
         puckPrevPos: {
             id: 'puckPrevPos',
-            x: FIELD_WIDTH / 2,
-            y: FIELD_HEIGHT * (4 / 4)
+            x: FIELD_WIDTH / 2 + FIELD_MARGIN,
+            y: FIELD_HEIGHT * (3 / 4) + FIELD_MARGIN
         },
         topLeftCornerPos: {
             id: 'topLeftCornerPos',

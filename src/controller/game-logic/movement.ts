@@ -5,6 +5,7 @@ import {
     moveCircle
 } from '../../model/action-creators';
 import { Identifiable, Movable, StateTree } from '../../model/types';
+import { max } from 'rxjs/operators';
 
 type MoveFunction = (
     direction: { x: number; y: number },
@@ -14,17 +15,20 @@ type MoveFunction = (
 type CreateMoveFunction = ({
     baseVelocity,
     maxVelocity,
-    entity
+    entity,
+    type
 }: {
     baseVelocity: number;
     maxVelocity: number;
     entity: Movable & Identifiable;
+    type: 'player' | 'puck';
 }) => MoveFunction;
 
 export const createMoveFunction: CreateMoveFunction = ({
     baseVelocity = 1,
     maxVelocity = 100,
-    entity = null
+    entity = null,
+    type = 'player'
 }) => {
     if (!entity) {
         throw new Error('parameter entity is required!');
@@ -42,6 +46,8 @@ export const createMoveFunction: CreateMoveFunction = ({
         changeMovementDirection(movement.id, 0, 0);
         isMoving = false;
     };
+    const _calculateVelocity =
+        type === 'player' ? _calculatePlayersVelocity : _calculatePuckVelocity;
 
     /*
      Updating movement value when it's changed from
@@ -100,7 +106,7 @@ export const createMoveFunction: CreateMoveFunction = ({
     };
 };
 
-const _calculateVelocity = (
+const _calculatePlayersVelocity = (
     currentDistance: number,
     distanceToTarget: number,
     baseVelocity: number,
@@ -130,5 +136,31 @@ const _calculateVelocity = (
 
         default:
             return baseVelocity;
+    }
+};
+
+const _calculatePuckVelocity = (
+    currentDistance: number,
+    distanceToTarget: number,
+    baseVelocity: number,
+    maxVelocity: number
+): number => {
+    const distanceProportion = Math.abs(currentDistance / distanceToTarget);
+    const speedDiference = maxVelocity - baseVelocity;
+
+    switch (true) {
+        case distanceProportion > 0.8:
+            return 0.8 * maxVelocity;
+        case distanceProportion > 0.7:
+            return 0.5 * maxVelocity;
+        case distanceProportion > 0.6:
+            return 0.4 * maxVelocity;
+        case distanceProportion > 0.5:
+            return 0.3 * maxVelocity;
+        case distanceProportion > 0.2:
+            return 0.2 * maxVelocity;
+
+        default:
+            return 0.1 * maxVelocity;
     }
 };

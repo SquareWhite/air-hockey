@@ -9,13 +9,14 @@ import { throttleTime } from 'rxjs/operators';
 const _pushCircle = ((state) => {
     const circle: GameCircle = denormalize(state, state.circles.otherCircle);
     return createMoveFunction({
-        baseVelocity: 10,
-        maxVelocity: 20,
-        entity: circle
+        baseVelocity: 5,
+        maxVelocity: 5,
+        entity: circle,
+        type: 'player'
     });
 })(store.getState());
 
-gameClock$.pipe(throttleTime(100)).subscribe((event) => {
+gameClock$.pipe(throttleTime(400)).subscribe((event) => {
     const state = store.getState();
     const puck: GameCircle = denormalize(state, state.circles.puck);
     const otherCircle: GameCircle = denormalize(
@@ -24,7 +25,9 @@ gameClock$.pipe(throttleTime(100)).subscribe((event) => {
     );
 
     const directionVector = getDirection(otherCircle.position, puck.position);
-    const distance = Math.random() * 80 + 80;
+    directionVector.x += 0.5 * (Math.random() - 1);
+    directionVector.y += 0.5 * (Math.random() - 1);
+    const distance = Math.random() * 80 + 100;
 
     _pushCircle(directionVector, distance);
 });

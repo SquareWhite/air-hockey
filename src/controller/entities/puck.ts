@@ -3,11 +3,8 @@ import { createMoveFunction } from '../game-logic/movement';
 import { store } from '../../model/store';
 import {
     calculateDistance,
-    Circle,
     Direction,
     getDirection,
-    intersectLineWithCircle,
-    Line,
     measureAngle,
     movePointInDirection,
     Point,
@@ -19,14 +16,24 @@ import { denormalize } from '../../model/denormalize';
 import { GameCircle } from '../../model/types';
 import { CircleCollision, Collision } from '../game-logic/collisions/types';
 import { findCirclePositionAtImpact } from '../utils';
-import { FIELD_HEIGHT, FIELD_MARGIN } from '../../model/initial-state';
+
+/*
+ Increases puck's speed after impact
+ */
+const IMPACT_SPEED_MULTIPLIER = 50;
+
+/*
+ Makes puck go in the same direction as player's circle
+ */
+const PLAYERS_IMPACT_INFLUENCE = 3;
 
 const _pushPuck = ((state) => {
     const puck: GameCircle = denormalize(state, state.circles.puck);
     return createMoveFunction({
-        baseVelocity: 4,
-        maxVelocity: 10,
-        entity: puck
+        baseVelocity: 8,
+        maxVelocity: 20,
+        entity: puck,
+        type: 'puck'
     });
 })(store.getState());
 
@@ -58,7 +65,6 @@ resolvedCollisions$.subscribe((collisions: Collision[]) => {
         return;
     }
 
-    const middleLineY = FIELD_HEIGHT / 2 + FIELD_MARGIN;
     const lineCrossCollision = collisions.find(
         (coll) =>
             coll.circle.id === circleCollision.circle.id &&
@@ -82,11 +88,10 @@ resolvedCollisions$.subscribe((collisions: Collision[]) => {
     let velocity;
     let direction;
     try {
-        const speedMultiplier = 8;
         [velocity, direction] = _exchangeMomentums(
             puck,
             circle,
-            speedMultiplier
+            IMPACT_SPEED_MULTIPLIER
         );
     } catch (err) {
         return;
@@ -130,12 +135,14 @@ const _exchangeMomentums = (
                     newDirection.x * circle.movement.velocity +
                     centerToImpact.x *
                         otherCircle.movement.velocity *
-                        projectedVelocity,
+                        projectedVelocity *
+                        PLAYERS_IMPACT_INFLUENCE,
                 y:
                     newDirection.y * circle.movement.velocity +
                     centerToImpact.y *
                         otherCircle.movement.velocity *
-                        projectedVelocity
+                        projectedVelocity *
+                        PLAYERS_IMPACT_INFLUENCE
             }
         );
         velocity +=
