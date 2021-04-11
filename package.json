@@ -1,17 +1,17 @@
 {
     "name": "air-hockey",
     "version": "0.0.1",
-    "description": "",
+    "description": "A simple browser game implemented in typescript.",
     "main": "src/index.ts",
     "scripts": {
         "compile": "tsc src",
         "watch": "tsc -w src",
-        "serve": "webpack-dev-server --open",
+        "start": "webpack-dev-server --open",
         "prettier": "prettier src --write",
         "test": "jest --coverage",
         "test:watch": "jest --coverage --watchAll"
     },
-    "author": "",
+    "author": "squarewhite",
     "license": "ISC",
     "dependencies": {
         "@types/jest": "^26.0.15",

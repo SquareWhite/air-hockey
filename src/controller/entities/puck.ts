@@ -20,7 +20,7 @@ import { findCirclePositionAtImpact } from '../utils';
 /*
  Increases puck's speed after impact
  */
-const IMPACT_SPEED_MULTIPLIER = 50;
+const IMPACT_SPEED_MULTIPLIER = 40;
 
 /*
  Makes puck go in the same direction as player's circle

@@ -5,7 +5,6 @@ import {
     moveCircle
 } from '../../model/action-creators';
 import { Identifiable, Movable, StateTree } from '../../model/types';
-import { max } from 'rxjs/operators';
 
 type MoveFunction = (
     direction: { x: number; y: number },
@@ -145,22 +144,56 @@ const _calculatePuckVelocity = (
     baseVelocity: number,
     maxVelocity: number
 ): number => {
-    const distanceProportion = Math.abs(currentDistance / distanceToTarget);
-    const speedDiference = maxVelocity - baseVelocity;
+    const DISTANCE_FOR_MAX_VELOCITY = 500;
 
-    switch (true) {
-        case distanceProportion > 0.8:
-            return 0.8 * maxVelocity;
-        case distanceProportion > 0.7:
-            return 0.5 * maxVelocity;
-        case distanceProportion > 0.6:
-            return 0.4 * maxVelocity;
-        case distanceProportion > 0.5:
-            return 0.3 * maxVelocity;
-        case distanceProportion > 0.2:
-            return 0.2 * maxVelocity;
+    const velocityPoints = [
+        [DISTANCE_FOR_MAX_VELOCITY, maxVelocity],
+        [0.8 * DISTANCE_FOR_MAX_VELOCITY, 0.5 * maxVelocity],
+        [0.7 * DISTANCE_FOR_MAX_VELOCITY, 0.4 * maxVelocity],
+        [0.6 * DISTANCE_FOR_MAX_VELOCITY, 0.3 * maxVelocity],
+        [0.5 * DISTANCE_FOR_MAX_VELOCITY, 0.2 * maxVelocity],
+        [0.2 * DISTANCE_FOR_MAX_VELOCITY, 0.1 * maxVelocity],
+        [0, 0.05 * maxVelocity]
+    ];
 
-        default:
-            return 0.1 * maxVelocity;
+    const leftBoundIndex =
+        velocityPoints.filter(([distance, _]) => currentDistance < +distance)
+            .length - 1;
+    const rightBoundIndex = leftBoundIndex + 1;
+
+    let velocity;
+    if (leftBoundIndex < 0) {
+        velocity = velocityPoints[0][1];
+    } else {
+        const leftBoundsDistance = velocityPoints[leftBoundIndex][0];
+        const leftBoundsVelocity = velocityPoints[leftBoundIndex][1];
+        const rightBoundsDistance = velocityPoints[rightBoundIndex][0];
+        const rightBoundsVelocity = velocityPoints[rightBoundIndex][1];
+
+        velocity =
+            leftBoundsVelocity -
+            Math.abs(
+                ((currentDistance - leftBoundsDistance) /
+                    (rightBoundsDistance - leftBoundsDistance)) *
+                    (leftBoundsVelocity - rightBoundsVelocity)
+            );
     }
+    return velocity;
+
+    // switch (true) {
+    //     case currentDistance > DISTANCE_FOR_MAX_VELOCITY:
+    //         return maxVelocity;
+    //     case currentDistance > 0.8 * DISTANCE_FOR_MAX_VELOCITY:
+    //         return 0.66 * maxVelocity;
+    //     case currentDistance > 0.7 * DISTANCE_FOR_MAX_VELOCITY:
+    //         return 0.5 * maxVelocity;
+    //     case currentDistance > 0.6 * DISTANCE_FOR_MAX_VELOCITY:
+    //         return 0.3 * maxVelocity;
+    //     case currentDistance > 0.5 * DISTANCE_FOR_MAX_VELOCITY:
+    //         return 0.25 * maxVelocity;
+    //     case currentDistance > 0.2 * DISTANCE_FOR_MAX_VELOCITY:
+    //         return 0.15 * maxVelocity;
+    //     default:
+    //         return 0.1 * maxVelocity;
+    // }
 };
